@@ -22,6 +22,13 @@ function AppContent() {
   const bgPickerRef = useRef(null)
   
   const [animatedBg, setAnimatedBg] = useState(() => localStorage.getItem('nav-animated-bg') === 'true')
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    mode: null,
+    data: null,
+    categoryId: null,
+    categoryTags: []
+  })
 
   // Apply background mode
   useEffect(() => {
