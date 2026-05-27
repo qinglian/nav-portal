@@ -42,14 +42,14 @@ function AppContent() {
     }
     
     if (gradients[bgMode]) {
-      body.style.background = gradients[bgMode]
+      body.style.setProperty('background', gradients[bgMode], 'important')
       body.style.backgroundAttachment = 'fixed'
     } else if (customWallpaper && bgMode === 'custom') {
-      body.style.background = `url(${customWallpaper}) center/cover no-repeat fixed`
+      body.style.setProperty('background', `url(${customWallpaper}) center/cover no-repeat fixed`, 'important')
     } else if (bgMode === 'custom') {
-      body.style.background = '#f2f2f7'
+      body.style.setProperty('background', '', 'important')
     } else {
-      body.style.background = '#f2f2f7'
+      body.style.setProperty('background', '', 'important')
     }
   }, [bgMode, customWallpaper])
 

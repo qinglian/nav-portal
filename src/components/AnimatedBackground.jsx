@@ -14,6 +14,7 @@ export default function AnimatedBackground({ enabled, theme }) {
 
   useEffect(() => {
     enabledRef.current = enabled;
+    console.log('AnimatedBackground enabled:', enabled);
   }, [enabled]);
 
   useEffect(() => {
