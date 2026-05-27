@@ -84,7 +84,6 @@ function AppContent() {
   const handleSelectEffect = (effect) => {
     setBgEffect(effect)
     localStorage.setItem('nav-bg-effect', effect)
-    setShowEffectPicker(false)
   }
 
   // Filter

@@ -1,4 +1,4 @@
-import { Sparkles, Star, Waves, Snowflake, Circle, Bug, Zap, Mountain, Hexagon, RotateCw } from 'lucide-react';
+import { Sparkles, Star, Waves, Snowflake, Circle, Bug, Zap, Mountain, Hexagon, RotateCw, Flame, CloudRain, Atom } from 'lucide-react';
 import styles from './EffectPicker.module.css';
 
 const effects = [
@@ -12,6 +12,9 @@ const effects = [
   { id: 'aurora', name: '极光', icon: Mountain, group: '2D' },
   { id: 'lightweb', name: '光网', icon: Hexagon, group: '3D' },
   { id: 'vortex', name: '漩涡', icon: RotateCw, group: '3D' },
+  { id: 'firewave', name: '焰浪', icon: Flame, group: '3D' },
+  { id: 'rain', name: '矩阵雨', icon: CloudRain, group: '3D' },
+  { id: 'dna', name: 'DNA', icon: Atom, group: '3D' },
 ];
 
 export default function EffectPicker({ currentEffect, enabled, onToggle, onSelect, onClose }) {
@@ -28,7 +31,6 @@ export default function EffectPicker({ currentEffect, enabled, onToggle, onSelec
           <button className={styles.closeBtn} onClick={onClose}>×</button>
         </div>
 
-        {/* 开关 */}
         <div className={styles.toggleRow}>
           <span className={styles.toggleLabel}>启用动效</span>
           <button

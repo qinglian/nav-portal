@@ -207,144 +207,212 @@ function ThreeScene({ effect, theme }) {
     let time = 0;
 
     if (effect === 'lightweb') {
-      // 光网效果 - 六边形网格
+      // 光网 - 全屏六边形网格
+      const cols = Math.ceil(window.innerWidth / 80) + 2;
+      const rows = Math.ceil(window.innerHeight / 80) + 2;
+      const spacingX = window.innerWidth / (cols - 1);
+      const spacingY = window.innerHeight / (rows - 1);
       const nodes = [];
-      const gridSize = 8;
-      const spacing = 3;
 
-      for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-          const x = (i - gridSize / 2) * spacing;
-          const y = (j - gridSize / 2) * spacing;
-          nodes.push({ x, y, index: i * gridSize + j });
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          const x = (i - cols / 2) * spacingX;
+          const y = (j - rows / 2) * spacingY;
+          nodes.push({ x, y, index: i * rows + j });
         }
       }
 
-      // 节点光球
-      const nodeGeo = new THREE.SphereGeometry(0.15, 16, 16);
-      const nodeMat = new THREE.MeshBasicMaterial({
-        color: isDark ? 0x00ffff : 0x0088ff,
-        transparent: true,
-        opacity: 0.9,
-      });
-
+      const nodeGeo = new THREE.SphereGeometry(0.12, 12, 12);
+      const nodeMat = new THREE.MeshBasicMaterial({ color: isDark ? 0x00ffff : 0x0088ff, transparent: true, opacity: 0.9 });
       nodes.forEach(node => {
         const mesh = new THREE.Mesh(nodeGeo, nodeMat.clone());
-        mesh.position.set(node.x, node.y, -10 + Math.sin(node.x * 0.5 + node.y * 0.5) * 2);
+        mesh.position.set(node.x, node.y, -5 + Math.sin(node.x * 0.3 + node.y * 0.3) * 1.5);
         mesh.userData = { baseZ: mesh.position.z, phase: Math.random() * Math.PI * 2 };
         scene.add(mesh);
         objects.push(mesh);
       });
 
-      // 连接线
-      const lineMat = new THREE.LineBasicMaterial({
-        color: isDark ? 0x00ffff : 0x0088ff,
-        transparent: true,
-        opacity: 0.3,
-      });
-
-      for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-          const idx = i * gridSize + j;
-          // 水平线
-          if (j < gridSize - 1) {
+      const lineMat = new THREE.LineBasicMaterial({ color: isDark ? 0x00ffff : 0x0088ff, transparent: true, opacity: 0.2 });
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          const idx = i * rows + j;
+          const connections = [];
+          if (j < rows - 1) connections.push(idx + 1);
+          if (i < cols - 1) connections.push(idx + rows);
+          if (i < cols - 1 && j < rows - 1) connections.push(idx + rows + 1);
+          if (i < cols - 1 && j > 0) connections.push(idx + rows - 1);
+          connections.forEach(to => {
             const geo = new THREE.BufferGeometry();
-            const positions = new Float32Array(6);
-            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
             const line = new THREE.Line(geo, lineMat.clone());
-            line.userData = { from: idx, to: idx + 1, type: 'h' };
+            line.userData = { from: idx, to };
             scene.add(line);
             objects.push(line);
-          }
-          // 垂直线
-          if (i < gridSize - 1) {
-            const geo = new THREE.BufferGeometry();
-            const positions = new Float32Array(6);
-            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const line = new THREE.Line(geo, lineMat.clone());
-            line.userData = { from: idx, to: idx + gridSize, type: 'v' };
-            scene.add(line);
-            objects.push(line);
-          }
-          // 对角线
-          if (i < gridSize - 1 && j < gridSize - 1) {
-            const geo = new THREE.BufferGeometry();
-            const positions = new Float32Array(6);
-            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const line = new THREE.Line(geo, lineMat.clone());
-            line.userData = { from: idx, to: idx + gridSize + 1, type: 'd' };
-            scene.add(line);
-            objects.push(line);
-          }
+          });
         }
       }
-
       camera.position.z = 15;
 
     } else if (effect === 'vortex') {
-      // 漩涡效果 - 螺旋粒子流
-      const count = 3000;
+      // 漩涡 - 全屏螺旋粒子
+      const count = 6000;
       const positions = new Float32Array(count * 3);
       const colors = new Float32Array(count * 3);
+      const aspect = window.innerWidth / window.innerHeight;
 
       for (let i = 0; i < count; i++) {
         const t = i / count;
-        const angle = t * Math.PI * 20;
-        const radius = t * 8;
-        const height = (t - 0.5) * 6;
-
+        const angle = t * Math.PI * 24;
+        const radius = t * 12 * (aspect > 1 ? 1 : aspect);
+        const height = (t - 0.5) * 8;
         positions[i * 3] = Math.cos(angle) * radius;
-        positions[i * 3 + 1] = height + Math.sin(angle * 2) * 0.3;
+        positions[i * 3 + 1] = height + Math.sin(angle * 3) * 0.4;
         positions[i * 3 + 2] = Math.sin(angle) * radius;
-
-        // 颜色渐变
-        const hue = t * 0.5 + 0.5; // 从青色到紫色
-        const color = new THREE.Color().setHSL(hue, 1, isDark ? 0.6 : 0.5);
-        colors[i * 3] = color.r;
-        colors[i * 3 + 1] = color.g;
-        colors[i * 3 + 2] = color.b;
+        const color = new THREE.Color().setHSL(t * 0.6 + 0.45, 1, isDark ? 0.6 : 0.5);
+        colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
       }
 
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-      const mat = new THREE.PointsMaterial({
-        size: 0.08,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.9,
-        sizeAttenuation: true,
-      });
-
+      const mat = new THREE.PointsMaterial({ size: 0.06, vertexColors: true, transparent: true, opacity: 0.9, sizeAttenuation: true });
       const points = new THREE.Points(geo, mat);
       scene.add(points);
       objects.push(points);
 
-      // 中心发光核心
-      const coreGeo = new THREE.SphereGeometry(0.8, 32, 32);
-      const coreMat = new THREE.MeshBasicMaterial({
-        color: isDark ? 0x00ffff : 0x0088ff,
-        transparent: true,
-        opacity: 0.5,
-      });
-      const core = new THREE.Mesh(coreGeo, coreMat);
-      scene.add(core);
-      objects.push(core);
+      const coreGeo = new THREE.SphereGeometry(1, 32, 32);
+      const coreMat = new THREE.MeshBasicMaterial({ color: isDark ? 0x00ffff : 0x0088ff, transparent: true, opacity: 0.5 });
+      scene.add(new THREE.Mesh(coreGeo, coreMat));
+      const glowGeo = new THREE.SphereGeometry(2, 32, 32);
+      const glowMat = new THREE.MeshBasicMaterial({ color: isDark ? 0xff00ff : 0xcc00cc, transparent: true, opacity: 0.15 });
+      scene.add(new THREE.Mesh(glowGeo, glowMat));
 
-      // 外层光晕
-      const glowGeo = new THREE.SphereGeometry(1.5, 32, 32);
-      const glowMat = new THREE.MeshBasicMaterial({
-        color: isDark ? 0xff00ff : 0xcc00cc,
-        transparent: true,
-        opacity: 0.2,
-      });
-      const glow = new THREE.Mesh(glowGeo, glowMat);
-      scene.add(glow);
-      objects.push(glow);
-
-      camera.position.set(0, 3, 12);
+      camera.position.set(0, 3, 14);
       camera.lookAt(0, 0, 0);
+
+    } else if (effect === 'firewave') {
+      // 焰浪 - 全屏粒子火焰波浪
+      const count = 4000;
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const aspect = window.innerWidth / window.innerHeight;
+
+      for (let i = 0; i < count; i++) {
+        const x = (Math.random() - 0.5) * 20 * (aspect > 1 ? 1 : aspect);
+        const z = (Math.random() - 0.5) * 12;
+        const y = -6 + Math.random() * 2;
+        positions[i * 3] = x; positions[i * 3 + 1] = y; positions[i * 3 + 2] = z;
+
+        const t = Math.random();
+        const color = new THREE.Color();
+        if (t < 0.3) color.setHSL(0.08, 1, 0.6); // 橙色
+        else if (t < 0.6) color.setHSL(0.04, 1, 0.5); // 红色
+        else if (t < 0.85) color.setHSL(0.12, 1, 0.7); // 黄色
+        else color.setHSL(0.6, 0.8, 0.7); // 蓝色点缀
+        colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const mat = new THREE.PointsMaterial({ size: 0.12, vertexColors: true, transparent: true, opacity: 0.85, sizeAttenuation: true });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+      objects.push(points);
+
+      camera.position.set(0, 2, 10);
+      camera.lookAt(0, 0, 0);
+
+    } else if (effect === 'rain') {
+      // 矩阵雨 - 全屏数字雨
+      const columns = 60;
+      const rows = 40;
+      const count = columns * rows;
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const aspect = window.innerWidth / window.innerHeight;
+
+      for (let i = 0; i < count; i++) {
+        const col = i % columns;
+        const row = Math.floor(i / columns);
+        const x = (col / columns - 0.5) * 16 * (aspect > 1 ? 1 : aspect);
+        const y = (row / rows - 0.5) * 12;
+        const z = -2 + Math.random() * 2;
+        positions[i * 3] = x; positions[i * 3 + 1] = y; positions[i * 3 + 2] = z;
+
+        const brightness = Math.random();
+        const color = new THREE.Color();
+        if (isDark) {
+          color.setHSL(0.35, 1, brightness * 0.6);
+        } else {
+          color.setHSL(0.35, 0.8, brightness * 0.4);
+        }
+        colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const mat = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, transparent: true, opacity: 0.8, sizeAttenuation: true });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+      objects.push(points);
+
+      camera.position.set(0, 0, 10);
+
+    } else if (effect === 'dna') {
+      // DNA双螺旋 - 全屏
+      const count = 2000;
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const aspect = window.innerWidth / window.innerHeight;
+
+      for (let i = 0; i < count; i++) {
+        const t = (i / count) * Math.PI * 12;
+        const y = (i / count - 0.5) * 16;
+        const radius = 3 * (aspect > 1 ? 1 : aspect);
+        const strand = i % 2;
+
+        const offset = strand * Math.PI;
+        const x = Math.cos(t + offset) * radius;
+        const z = Math.sin(t + offset) * radius;
+
+        positions[i * 3] = x; positions[i * 3 + 1] = y; positions[i * 3 + 2] = z;
+
+        const color = new THREE.Color();
+        if (strand === 0) {
+          color.setHSL(0.55, 1, isDark ? 0.6 : 0.5); // 青色
+        } else {
+          color.setHSL(0.8, 1, isDark ? 0.6 : 0.5); // 紫色
+        }
+        colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
+      }
+
+      // 横梁连接
+      for (let i = 0; i < 100; i++) {
+        const t = (i / 100) * Math.PI * 12;
+        const y = (i / 100 - 0.5) * 16;
+        const radius = 3 * (aspect > 1 ? 1 : aspect);
+        const x1 = Math.cos(t) * radius, z1 = Math.sin(t) * radius;
+        const x2 = Math.cos(t + Math.PI) * radius, z2 = Math.sin(t + Math.PI) * radius;
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([x1, y, z1, x2, y, z2]), 3));
+        const lineMat = new THREE.LineBasicMaterial({ color: isDark ? 0x4466ff : 0x3344cc, transparent: true, opacity: 0.3 });
+        const line = new THREE.Line(geo, lineMat);
+        scene.add(line);
+        objects.push(line);
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const mat = new THREE.PointsMaterial({ size: 0.1, vertexColors: true, transparent: true, opacity: 0.9, sizeAttenuation: true });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+      objects.push(points);
+
+      camera.position.set(0, 0, 12);
     }
 
     const handleResize = () => {
@@ -362,41 +430,57 @@ function ThreeScene({ effect, theme }) {
       if (effect === 'lightweb') {
         const nodes = objects.filter(o => o.type === 'Mesh');
         const lines = objects.filter(o => o.type === 'Line');
-
-        // 更新节点位置
-        nodes.forEach((node, i) => {
+        nodes.forEach(node => {
           node.position.z = node.userData.baseZ + Math.sin(time * 2 + node.userData.phase) * 0.5;
           node.material.opacity = 0.6 + Math.sin(time * 3 + node.userData.phase) * 0.3;
         });
-
-        // 更新连线
         lines.forEach(line => {
           const from = nodes[line.userData.from];
           const to = nodes[line.userData.to];
           if (from && to) {
-            const positions = line.geometry.attributes.position.array;
-            positions[0] = from.position.x;
-            positions[1] = from.position.y;
-            positions[2] = from.position.z;
-            positions[3] = to.position.x;
-            positions[4] = to.position.y;
-            positions[5] = to.position.z;
+            const p = line.geometry.attributes.position.array;
+            p[0] = from.position.x; p[1] = from.position.y; p[2] = from.position.z;
+            p[3] = to.position.x; p[4] = to.position.y; p[5] = to.position.z;
             line.geometry.attributes.position.needsUpdate = true;
-            line.material.opacity = 0.2 + Math.sin(time * 2 + line.userData.from * 0.1) * 0.15;
+            line.material.opacity = 0.15 + Math.sin(time * 2 + line.userData.from * 0.1) * 0.1;
           }
         });
 
       } else if (effect === 'vortex') {
-        objects.forEach((obj, i) => {
+        objects.forEach(obj => {
+          if (obj.type === 'Points') { obj.rotation.y += 0.004; obj.rotation.z = Math.sin(time * 0.3) * 0.05; }
+          else { obj.rotation.y += 0.008; }
+        });
+
+      } else if (effect === 'firewave') {
+        objects.forEach(obj => {
           if (obj.type === 'Points') {
-            obj.rotation.y += 0.005;
-            obj.rotation.z = Math.sin(time * 0.5) * 0.1;
-          } else {
-            obj.rotation.y += 0.01;
-            if (obj.material) {
-              obj.material.opacity = 0.3 + Math.sin(time * 2 + i) * 0.2;
+            const pos = obj.geometry.attributes.position.array;
+            for (let i = 0; i < pos.length; i += 3) {
+              pos[i + 1] += 0.03 + Math.sin(time * 3 + pos[i] * 0.5) * 0.02;
+              if (pos[i + 1] > 6) pos[i + 1] = -6;
             }
+            obj.geometry.attributes.position.needsUpdate = true;
           }
+        });
+
+      } else if (effect === 'rain') {
+        objects.forEach(obj => {
+          if (obj.type === 'Points') {
+            const pos = obj.geometry.attributes.position.array;
+            const cols = 60, rows = 40;
+            for (let i = 0; i < cols * rows; i++) {
+              pos[i * 3 + 1] -= 0.05 + Math.random() * 0.02;
+              if (pos[i * 3 + 1] < -6) pos[i * 3 + 1] = 6;
+            }
+            obj.geometry.attributes.position.needsUpdate = true;
+          }
+        });
+
+      } else if (effect === 'dna') {
+        objects.forEach(obj => {
+          if (obj.type === 'Points') { obj.rotation.y += 0.005; }
+          else if (obj.type === 'Line') { obj.rotation.y += 0.005; }
         });
       }
 
@@ -418,7 +502,7 @@ function ThreeScene({ effect, theme }) {
 
 // ========== 主组件 ==========
 
-const THREE_EFFECTS = ['lightweb', 'vortex'];
+const THREE_EFFECTS = ['lightweb', 'vortex', 'firewave', 'rain', 'dna'];
 
 export default function AnimatedBackground({ enabled, theme, effect = 'particles' }) {
   const canvasRef = useRef(null);
