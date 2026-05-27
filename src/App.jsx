@@ -6,7 +6,8 @@ import TimeWidget from './components/TimeWidget'
 import SearchEnginePicker from './components/SearchEnginePicker'
 import CategorySection from './components/CategorySection'
 import EditModal from './components/EditModal'
-import { Plus, GripVertical } from 'lucide-react'
+import DataManager from './components/DataManager'
+import { Plus } from 'lucide-react'
 import styles from './App.module.css'
 
 function AppContent() {
@@ -127,6 +128,9 @@ function AppContent() {
         onSearch={setSearchQuery}
         onToggleBgMode={toggleBgMode}
       />
+      
+      {/* 导入导出管理器 */}
+      <DataManager isEditMode={isEditMode} />
 
       <main className={styles.main}>
         <div className={styles.content}>

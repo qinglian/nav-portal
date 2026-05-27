@@ -1,0 +1,37 @@
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.actionBtn:hover {
+  background: var(--glass-bg-heavy);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+@media (max-width: 640px) {
+  .actionBtn span {
+    display: none;
+  }
+
+  .actionBtn {
+    padding: 6px;
+  }
+}
