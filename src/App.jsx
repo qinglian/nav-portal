@@ -20,7 +20,6 @@ function AppContent() {
   const [bgMode, setBgMode] = useState(() => localStorage.getItem('nav-bg-mode') || 'default')
   const [customWallpaper, setCustomWallpaper] = useState(() => localStorage.getItem('nav-custom-wallpaper') || '')
   const [showBgPicker, setShowBgPicker] = useState(false)
-  const bgPickerRef = useRef(null)
   
   const [animatedBg, setAnimatedBg] = useState(() => localStorage.getItem('nav-animated-bg') === 'true')
   const [bgEffect, setBgEffect] = useState(() => localStorage.getItem('nav-bg-effect') || 'particles')
@@ -55,19 +54,6 @@ function AppContent() {
       body.style.setProperty('background', '', 'important')
     }
   }, [bgMode, customWallpaper])
-
-  // Close bg picker on outside click
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (bgPickerRef.current && !bgPickerRef.current.contains(e.target)) {
-        setShowBgPicker(false)
-      }
-    }
-    if (showBgPicker) {
-      document.addEventListener('mousedown', handleClick)
-    }
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [showBgPicker])
 
   const toggleBgMode = () => {
     setShowBgPicker(!showBgPicker)
@@ -157,29 +143,26 @@ function AppContent() {
   return (
     <div className={styles.app}>
       <AnimatedBackground enabled={animatedBg} theme={theme} effect={bgEffect} />
-      
-      <div ref={bgPickerRef} className={styles.bgPickerContainer}>
-        <Header 
-          onToggleEdit={() => setIsEditMode(!isEditMode)}
-          isEditMode={isEditMode}
-          searchQuery={searchQuery}
-          onSearch={setSearchQuery}
-          onToggleBgMode={toggleBgMode}
-          animatedBg={animatedBg}
-          onToggleAnimatedBg={toggleAnimatedBg}
+
+      <Header
+        onToggleEdit={() => setIsEditMode(!isEditMode)}
+        isEditMode={isEditMode}
+        searchQuery={searchQuery}
+        onSearch={setSearchQuery}
+        onToggleBgMode={toggleBgMode}
+        animatedBg={animatedBg}
+        onToggleAnimatedBg={toggleAnimatedBg}
         onOpenEffectPicker={() => setShowEffectPicker(true)}
       />
-        
-        {showBgPicker && (
-          <div className={styles.bgPicker}>
-            <WallpaperPicker
-              currentWallpaper={bgMode === 'custom' && customWallpaper ? customWallpaper : bgMode}
-              onSelect={handleSelectPreset}
-              onUpload={handleUploadWallpaper}
-            />
-          </div>
-        )}
-      </div>
+
+      {showBgPicker && (
+        <WallpaperPicker
+          currentWallpaper={bgMode === 'custom' && customWallpaper ? customWallpaper : bgMode}
+          onSelect={handleSelectPreset}
+          onUpload={handleUploadWallpaper}
+          onClose={() => setShowBgPicker(false)}
+        />
+      )}
 
       {showEffectPicker && (
         <EffectPicker
