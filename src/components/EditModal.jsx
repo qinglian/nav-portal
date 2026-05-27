@@ -1,14 +1,17 @@
-import { X, Plus } from 'lucide-react'
+import { X, Plus, Trash2 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import styles from './EditModal.module.css'
 
-export default function EditModal({ isOpen, onClose, mode, data, onSave }) {
+export default function EditModal({ isOpen, onClose, mode, data, categoryTags = [], onSave }) {
   const [formData, setFormData] = useState({
     name: '',
     url: '',
     description: '',
-    icon: 'Folder'
+    tag: '',
+    icon: 'Folder',
+    tags: []
   })
+  const [newTag, setNewTag] = useState('')
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -17,20 +20,24 @@ export default function EditModal({ isOpen, onClose, mode, data, onSave }) {
         name: data.name || '',
         url: data.url || '',
         description: data.description || '',
-        icon: data.icon || 'Folder'
+        tag: data.tag || (categoryTags[0] || ''),
+        icon: data.icon || 'Folder',
+        tags: data.tags || categoryTags || []
       })
     } else if (isOpen && !data) {
       setFormData({
         name: '',
         url: '',
         description: '',
-        icon: 'Folder'
+        tag: categoryTags[0] || '',
+        icon: 'Folder',
+        tags: categoryTags || []
       })
     }
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100)
     }
-  }, [isOpen, data])
+  }, [isOpen, data, categoryTags])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -40,9 +47,30 @@ export default function EditModal({ isOpen, onClose, mode, data, onSave }) {
     onClose()
   }
 
+  const handleAddTag = () => {
+    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, newTag.trim()]
+      }))
+      setNewTag('')
+    }
+  }
+
+  const handleRemoveTag = (tagToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }))
+  }
+
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
       onClose()
+    }
+    if (e.key === 'Enter' && document.activeElement === document.getElementById('newTagInput')) {
+      e.preventDefault()
+      handleAddTag()
     }
   }
 
@@ -66,20 +94,25 @@ export default function EditModal({ isOpen, onClose, mode, data, onSave }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className={styles.form}>
+          {/* 名称 */}
+          <div className={styles.field}>
+            <label className={styles.label}>
+              {mode === 'site' ? '网站名称' : '分类名称'} *
+            </label>
+            <input
+              ref={inputRef}
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder={mode === 'site' ? '例如：GitHub' : '例如：开发工具'}
+              className={styles.input}
+              required
+            />
+          </div>
+
           {mode === 'site' ? (
             <>
-              <div className={styles.field}>
-                <label className={styles.label}>名称 *</label>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="网站名称"
-                  className={styles.input}
-                  required
-                />
-              </div>
+              {/* 网址 */}
               <div className={styles.field}>
                 <label className={styles.label}>网址 *</label>
                 <input
@@ -91,45 +124,74 @@ export default function EditModal({ isOpen, onClose, mode, data, onSave }) {
                   required
                 />
               </div>
+
+              {/* 描述 */}
               <div className={styles.field}>
                 <label className={styles.label}>描述</label>
-                <textarea
+                <input
+                  type="text"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="简短描述..."
-                  className={styles.textarea}
-                  rows={2}
+                  className={styles.input}
                 />
+              </div>
+
+              {/* 子标签选择 */}
+              <div className={styles.field}>
+                <label className={styles.label}>所属子标签</label>
+                <div className={styles.tagSelect}>
+                  {formData.tags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      className={`${styles.tagOption} ${formData.tag === tag ? styles.active : ''}`}
+                      onClick={() => setFormData({ ...formData, tag })}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           ) : (
             <>
+              {/* 子标签管理 */}
               <div className={styles.field}>
-                <label className={styles.label}>分类名称 *</label>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="分类名称"
-                  className={styles.input}
-                  required
-                />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>图标</label>
-                <select
-                  value={formData.icon}
-                  onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                  className={styles.select}
-                >
-                  <option value="Folder">文件夹</option>
-                  <option value="Sparkles">AI</option>
-                  <option value="Code">代码</option>
-                  <option value="Palette">设计</option>
-                  <option value="Play">播放</option>
-                  <option value="Users">用户</option>
-                </select>
+                <label className={styles.label}>子标签管理</label>
+                <div className={styles.tagManager}>
+                  <div className={styles.tagList}>
+                    {formData.tags.map((tag, index) => (
+                      <div key={index} className={styles.tagItem}>
+                        <span>{tag}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className={styles.tagRemoveBtn}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles.tagAddRow}>
+                    <input
+                      id="newTagInput"
+                      type="text"
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="输入新标签名称"
+                      className={styles.tagInput}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddTag}
+                      className={styles.tagAddBtn}
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -139,8 +201,7 @@ export default function EditModal({ isOpen, onClose, mode, data, onSave }) {
               取消
             </button>
             <button type="submit" className={styles.saveBtn}>
-              <Plus size={18} />
-              <span>{data ? '保存' : '添加'}</span>
+              {data ? '保存' : '添加'}
             </button>
           </div>
         </form>

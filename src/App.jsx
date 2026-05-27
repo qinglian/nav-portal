@@ -1,28 +1,49 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ThemeProvider } from './context/ThemeContext'
 import { DataProvider, useData } from './context/DataContext'
 import Header from './components/Header'
-import SearchBar from './components/SearchBar'
+import TimeWidget from './components/TimeWidget'
+import SearchEnginePicker from './components/SearchEnginePicker'
 import CategorySection from './components/CategorySection'
 import EditModal from './components/EditModal'
-import { Plus } from 'lucide-react'
+import { Plus, GripVertical } from 'lucide-react'
 import styles from './App.module.css'
 
 function AppContent() {
-  const { data, addCategory, updateCategory, deleteCategory, addSite, updateSite, deleteSite } = useData()
+  const { data, addCategory, updateCategory, deleteCategory, addSite, updateSite, deleteSite, reorderSites, reorderCategories, reorderTags } = useData()
   const [isEditMode, setIsEditMode] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [bgMode, setBgMode] = useState(() => {
+    return localStorage.getItem('nav-bg-mode') || 'default'
+  })
   const [modalState, setModalState] = useState({
     isOpen: false,
-    mode: null, // 'site' or 'category'
+    mode: null,
     data: null,
-    categoryId: null
+    categoryId: null,
+    categoryTags: []
   })
 
-  // Filter sites based on search query
+  // Apply background mode
+  useEffect(() => {
+    if (bgMode === 'custom') {
+      document.documentElement.setAttribute('data-bg', 'custom')
+    } else {
+      document.documentElement.removeAttribute('data-bg')
+    }
+  }, [bgMode])
+
+  const toggleBgMode = () => {
+    const modes = ['default', 'custom']
+    const currentIndex = modes.indexOf(bgMode)
+    const nextMode = modes[(currentIndex + 1) % modes.length]
+    setBgMode(nextMode)
+    localStorage.setItem('nav-bg-mode', nextMode)
+  }
+
+  // Filter
   const filteredCategories = useMemo(() => {
     if (!searchQuery) return data.categories
-    
     return data.categories.map(category => ({
       ...category,
       sites: category.sites.filter(site => 
@@ -34,141 +55,108 @@ function AppContent() {
   }, [data.categories, searchQuery])
 
   // Modal handlers
-  const openAddSiteModal = (categoryId) => {
-    setModalState({
-      isOpen: true,
-      mode: 'site',
-      data: null,
-      categoryId
-    })
+  const openAddSiteModal = (categoryId, categoryTags) => {
+    setModalState({ isOpen: true, mode: 'site', data: null, categoryId, categoryTags })
   }
-
-  const openEditSiteModal = (categoryId, site) => {
-    setModalState({
-      isOpen: true,
-      mode: 'site',
-      data: site,
-      categoryId
-    })
+  const openEditSiteModal = (categoryId, site, categoryTags) => {
+    setModalState({ isOpen: true, mode: 'site', data: site, categoryId, categoryTags })
   }
-
   const openAddCategoryModal = () => {
-    setModalState({
-      isOpen: true,
-      mode: 'category',
-      data: null,
-      categoryId: null
-    })
+    setModalState({ isOpen: true, mode: 'category', data: null, categoryId: null, categoryTags: [] })
   }
-
   const openEditCategoryModal = (category) => {
-    setModalState({
-      isOpen: true,
-      mode: 'category',
-      data: category,
-      categoryId: category.id
-    })
+    setModalState({ isOpen: true, mode: 'category', data: category, categoryId: category.id, categoryTags: category.tags || [] })
   }
-
   const closeModal = () => {
-    setModalState({
-      isOpen: false,
-      mode: null,
-      data: null,
-      categoryId: null
-    })
+    setModalState({ isOpen: false, mode: null, data: null, categoryId: null, categoryTags: [] })
   }
 
   const handleModalSave = (formData) => {
     if (modalState.mode === 'site') {
       if (modalState.data) {
-        // Edit existing site
         updateSite(modalState.categoryId, modalState.data.id, formData)
       } else {
-        // Add new site
-        addSite(modalState.categoryId, {
-          ...formData,
-          id: Date.now().toString()
-        })
+        addSite(modalState.categoryId, { ...formData, id: Date.now().toString() })
       }
     } else if (modalState.mode === 'category') {
       if (modalState.data) {
-        // Edit existing category
-        updateCategory(modalState.categoryId, formData)
+        updateCategory(modalState.categoryId, { name: formData.name, tags: formData.tags })
       } else {
-        // Add new category
-        addCategory({
-          ...formData,
-          id: Date.now().toString()
-        })
+        addCategory({ name: formData.name, tags: formData.tags, id: Date.now().toString() })
       }
     }
   }
 
   const handleDeleteSite = (categoryId, siteId) => {
-    if (confirm('确定要删除这个网站吗？')) {
-      deleteSite(categoryId, siteId)
-    }
+    if (confirm('确定要删除这个网站吗？')) deleteSite(categoryId, siteId)
+  }
+  const handleDeleteCategory = (categoryId) => {
+    if (confirm('确定要删除这个分类吗？')) deleteCategory(categoryId)
   }
 
-  const handleDeleteCategory = (categoryId) => {
-    if (confirm('确定要删除这个分类吗？分类下的所有网站也会被删除。')) {
-      deleteCategory(categoryId)
-    }
+  // 分类拖拽排序
+  const handleCategoryDragStart = (e, index) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'category', index }))
+    e.currentTarget.style.opacity = '0.5'
+  }
+  const handleCategoryDragEnd = (e) => {
+    e.currentTarget.style.opacity = '1'
+  }
+  const handleCategoryDragOver = (e) => {
+    e.preventDefault()
+  }
+  const handleCategoryDrop = (e, targetIndex) => {
+    e.preventDefault()
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'))
+      if (data.type === 'category') {
+        const cats = [...filteredCategories]
+        const [moved] = cats.splice(data.index, 1)
+        cats.splice(targetIndex, 0, moved)
+        reorderCategories(cats)
+      }
+    } catch {}
   }
 
   return (
     <div className={styles.app}>
-      {/* Background Decoration */}
-      <div className={styles.bgDecoration} />
-
-      {/* Header */}
       <Header 
         onToggleEdit={() => setIsEditMode(!isEditMode)}
         isEditMode={isEditMode}
+        searchQuery={searchQuery}
+        onSearch={setSearchQuery}
+        onToggleBgMode={toggleBgMode}
       />
 
-      {/* Main Content */}
       <main className={styles.main}>
-        {/* Hero Section */}
-        <section className={styles.hero}>
-          <h1 className={styles.heroTitle}>
-            <span className={styles.gradientText}>高效实用</span>
-            <br />
-            的导航门户
-          </h1>
-          <p className={styles.heroSubtitle}>
-            快速访问常用网站，提升工作效率
-          </p>
-          <SearchBar onSearch={setSearchQuery} />
-        </section>
-
-        {/* Categories */}
-        <section className={styles.content}>
-          {/* Add Category Button (Edit Mode) */}
-          {isEditMode && (
+        <div className={styles.content}>
+          {!searchQuery && <TimeWidget />}
+          {!searchQuery && <SearchEnginePicker isEditMode={isEditMode} />}
+          {isEditMode && !searchQuery && (
             <button onClick={openAddCategoryModal} className={styles.addCategoryBtn}>
-              <Plus size={20} />
+              <Plus size={18} />
               <span>添加新分类</span>
             </button>
           )}
 
-          {/* Category Sections */}
           {filteredCategories.map((category, index) => (
             <CategorySection
               key={category.id}
               category={category}
               isEditMode={isEditMode}
-              onAddSite={openAddSiteModal}
-              onEditSite={openEditSiteModal}
+              onAddSite={(id) => openAddSiteModal(id, category.tags || [])}
+              onEditSite={(id, site) => openEditSiteModal(id, site, category.tags || [])}
               onDeleteSite={handleDeleteSite}
               onEditCategory={openEditCategoryModal}
               onDeleteCategory={handleDeleteCategory}
-              style={{ animationDelay: `${index * 100}ms` }}
+              onReorderSites={reorderSites}
+              onReorderTags={reorderTags}
+              onReorderCategories={reorderCategories}
+              categoryIndex={index}
+              allCategories={filteredCategories}
             />
           ))}
 
-          {/* No Results */}
           {searchQuery && filteredCategories.length === 0 && (
             <div className={styles.noResults}>
               <p>没有找到匹配的网站</p>
@@ -177,20 +165,19 @@ function AppContent() {
               </button>
             </div>
           )}
-        </section>
+        </div>
       </main>
 
-      {/* Footer */}
       <footer className={styles.footer}>
-        <p>© 2024 导航门户 · 精心打造</p>
+        <p>© 2024 清炼导航 · QingLian</p>
       </footer>
 
-      {/* Edit Modal */}
       <EditModal
         isOpen={modalState.isOpen}
         onClose={closeModal}
         mode={modalState.mode}
         data={modalState.data}
+        categoryTags={modalState.categoryTags}
         onSave={handleModalSave}
       />
     </div>
