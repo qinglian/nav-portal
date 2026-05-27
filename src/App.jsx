@@ -42,17 +42,14 @@ function AppContent() {
     }
     
     if (gradients[bgMode]) {
-      document.documentElement.setAttribute('data-bg', 'custom')
-      body.style.setProperty('background', gradients[bgMode], 'important')
+      body.style.background = gradients[bgMode]
       body.style.backgroundAttachment = 'fixed'
     } else if (customWallpaper && bgMode === 'custom') {
-      document.documentElement.setAttribute('data-bg', 'custom')
-      body.style.setProperty('background', `url(${customWallpaper}) center/cover no-repeat fixed`, 'important')
+      body.style.background = `url(${customWallpaper}) center/cover no-repeat fixed`
     } else if (bgMode === 'custom') {
-      document.documentElement.setAttribute('data-bg', 'custom')
+      body.style.background = '#f2f2f7'
     } else {
-      document.documentElement.removeAttribute('data-bg')
-      body.style.setProperty('background', '', 'important')
+      body.style.background = '#f2f2f7'
     }
   }, [bgMode, customWallpaper])
 

@@ -85,7 +85,6 @@
 
 /* Custom Background Mode */
 [data-bg="custom"] {
-  --page-bg: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   --glass-bg: rgba(255, 255, 255, 0.75);
   --glass-bg-heavy: rgba(255, 255, 255, 0.4);
   --glass-bg-section: rgba(255, 255, 255, 0.3);
@@ -97,7 +96,6 @@
 }
 
 [data-bg="custom"][data-theme="dark"] {
-  --page-bg: linear-gradient(135deg, #1a1a2e 0%, #2d1b69 50%, #44318d 100%);
   --glass-bg: rgba(255, 255, 255, 0.12);
   --glass-bg-heavy: rgba(255, 255, 255, 0.06);
   --glass-bg-section: rgba(255, 255, 255, 0.04);
@@ -121,7 +119,7 @@ html {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', 'PingFang SC', sans-serif;
-  background: var(--page-bg);
+  background: #f2f2f7;
   color: var(--text-primary);
   line-height: 1.5;
   min-height: 100vh;
