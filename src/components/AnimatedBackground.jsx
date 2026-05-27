@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import styles from './AnimatedBackground.module.css';
 
@@ -7,33 +7,26 @@ import styles from './AnimatedBackground.module.css';
 function drawParticles(ctx, canvas, particles, theme) {
   const isDark = theme === 'dark';
   const color = isDark ? '100, 200, 255' : '0, 122, 255';
-
   particles.forEach((p, i) => {
     p.x += p.vx; p.y += p.vy;
     if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
     if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${color}, 0.8)`;
-    ctx.fill();
-
-    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 3);
-    g.addColorStop(0, `rgba(${color}, 0.4)`);
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
+    g.addColorStop(0, `rgba(${color}, 0.6)`);
+    g.addColorStop(0.4, `rgba(${color}, 0.2)`);
     g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius * 3, 0, Math.PI * 2);
-    ctx.fillStyle = g;
-    ctx.fill();
-
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${color}, 1)`; ctx.fill();
     for (let j = i + 1; j < particles.length; j++) {
       const p2 = particles[j];
       const dx = p.x - p2.x, dy = p.y - p2.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 150) {
+      if (dist < 120) {
         ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
-        ctx.strokeStyle = `rgba(${color}, ${0.3 * (1 - dist / 150)})`;
-        ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.strokeStyle = `rgba(${color}, ${0.25 * (1 - dist / 120)})`;
+        ctx.lineWidth = 1; ctx.stroke();
       }
     }
   });
@@ -44,19 +37,20 @@ function drawStars(ctx, canvas, stars, theme) {
   const color = isDark ? '255, 255, 255' : '0, 100, 200';
   stars.forEach(star => {
     star.twinkle += star.twinkleSpeed;
-    const opacity = 0.4 + Math.sin(star.twinkle) * 0.4;
-    ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${color}, ${opacity})`; ctx.fill();
-    const g = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.radius * 4);
-    g.addColorStop(0, `rgba(${color}, ${opacity * 0.5})`);
+    const opacity = 0.5 + Math.sin(star.twinkle) * 0.5;
+    const g = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.radius * 6);
+    g.addColorStop(0, `rgba(${color}, ${opacity})`);
+    g.addColorStop(0.3, `rgba(${color}, ${opacity * 0.3})`);
     g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.beginPath(); ctx.arc(star.x, star.y, star.radius * 4, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(star.x, star.y, star.radius * 6, 0, Math.PI * 2);
     ctx.fillStyle = g; ctx.fill();
-    if (star.radius > 1) {
+    ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${opacity})`; ctx.fill();
+    if (star.radius > 1.2) {
       ctx.beginPath();
-      ctx.moveTo(star.x - star.radius * 3, star.y); ctx.lineTo(star.x + star.radius * 3, star.y);
-      ctx.moveTo(star.x, star.y - star.radius * 3); ctx.lineTo(star.x, star.y + star.radius * 3);
-      ctx.strokeStyle = `rgba(${color}, ${opacity * 0.6})`; ctx.lineWidth = 1; ctx.stroke();
+      ctx.moveTo(star.x - star.radius * 4, star.y); ctx.lineTo(star.x + star.radius * 4, star.y);
+      ctx.moveTo(star.x, star.y - star.radius * 4); ctx.lineTo(star.x, star.y + star.radius * 4);
+      ctx.strokeStyle = `rgba(${color}, ${opacity * 0.7})`; ctx.lineWidth = 1; ctx.stroke();
     }
   });
 }
@@ -64,136 +58,129 @@ function drawStars(ctx, canvas, stars, theme) {
 function drawWaves(ctx, canvas, waves, theme, time) {
   const isDark = theme === 'dark';
   const colors = isDark
-    ? ['rgba(100, 150, 255, 0.5)', 'rgba(150, 100, 255, 0.4)', 'rgba(100, 200, 200, 0.3)']
-    : ['rgba(0, 122, 255, 0.4)', 'rgba(88, 86, 214, 0.3)', 'rgba(0, 200, 200, 0.25)'];
+    ? ['rgba(0, 200, 255, 0.6)', 'rgba(150, 0, 255, 0.5)', 'rgba(0, 255, 150, 0.4)']
+    : ['rgba(0, 150, 255, 0.5)', 'rgba(100, 50, 200, 0.4)', 'rgba(0, 200, 200, 0.35)'];
   waves.forEach((wave, index) => {
     ctx.beginPath(); ctx.moveTo(0, canvas.height);
-    for (let x = 0; x <= canvas.width; x += 5) {
+    for (let x = 0; x <= canvas.width; x += 4) {
       ctx.lineTo(x, wave.y + Math.sin(x * wave.frequency + time * wave.speed + wave.offset) * wave.amplitude);
     }
     ctx.lineTo(canvas.width, canvas.height); ctx.closePath();
-    ctx.fillStyle = colors[index % colors.length]; ctx.fill();
+    const g = ctx.createLinearGradient(0, wave.y - wave.amplitude, 0, canvas.height);
+    g.addColorStop(0, colors[index]);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fill();
     ctx.beginPath();
-    for (let x = 0; x <= canvas.width; x += 5) {
+    for (let x = 0; x <= canvas.width; x += 4) {
       const y = wave.y + Math.sin(x * wave.frequency + time * wave.speed + wave.offset) * wave.amplitude;
       x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = colors[index % colors.length].replace(/[\d.]+\)$/, '0.8)');
-    ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = colors[index].replace(/[\d.]+\)$/, '1)'); ctx.lineWidth = 2; ctx.stroke();
   });
 }
 
 function drawSnow(ctx, canvas, snowflakes, theme) {
   const isDark = theme === 'dark';
-  const color = isDark ? '200, 230, 255' : '150, 200, 255';
+  const color = isDark ? '220, 240, 255' : '180, 210, 255';
   snowflakes.forEach(flake => {
-    flake.y += flake.speed; flake.x += Math.sin(flake.y * 0.01 + flake.rotation) * 0.8; flake.rotation += 0.02;
-    if (flake.y > canvas.height) { flake.y = -10; flake.x = Math.random() * canvas.width; }
+    flake.y += flake.speed; flake.x += Math.sin(flake.y * 0.008 + flake.rotation) * 0.6; flake.rotation += 0.015;
+    if (flake.y > canvas.height) { flake.y = -15; flake.x = Math.random() * canvas.width; }
     ctx.save(); ctx.translate(flake.x, flake.y); ctx.rotate(flake.rotation);
-    ctx.beginPath();
     for (let i = 0; i < 6; i++) {
-      ctx.rotate(Math.PI / 3); ctx.moveTo(0, 0); ctx.lineTo(0, flake.radius * 2);
-      ctx.moveTo(0, flake.radius); ctx.lineTo(-flake.radius * 0.5, flake.radius * 1.5);
-      ctx.moveTo(0, flake.radius); ctx.lineTo(flake.radius * 0.5, flake.radius * 1.5);
+      ctx.rotate(Math.PI / 3);
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, flake.radius * 2);
+      ctx.strokeStyle = `rgba(${color}, ${flake.opacity})`; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, flake.radius * 0.6); ctx.lineTo(-flake.radius * 0.4, flake.radius * 1.2);
+      ctx.moveTo(0, flake.radius * 0.6); ctx.lineTo(flake.radius * 0.4, flake.radius * 1.2);
+      ctx.stroke();
     }
-    ctx.strokeStyle = `rgba(${color}, ${flake.opacity})`; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, flake.radius * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${flake.opacity * 0.8})`; ctx.fill();
     ctx.restore();
   });
 }
 
 function drawBubbles(ctx, canvas, bubbles, theme) {
   const isDark = theme === 'dark';
-  const colors = isDark ? ['100, 200, 255', '150, 150, 255', '100, 255, 200'] : ['0, 150, 255', '100, 100, 255', '0, 200, 150'];
-  bubbles.forEach((bubble, i) => {
-    bubble.y -= bubble.speed; bubble.x += Math.sin(bubble.y * 0.02 + i) * 0.5;
-    if (bubble.y < -50) { bubble.y = canvas.height + 50; bubble.x = Math.random() * canvas.width; }
+  const colors = isDark ? ['80, 200, 255', '180, 100, 255', '100, 255, 200'] : ['0, 150, 255', '150, 100, 255', '50, 200, 200'];
+  bubbles.forEach((b, i) => {
+    b.y -= b.speed; b.x += Math.sin(b.y * 0.015 + i) * 0.4;
+    if (b.y < -b.radius * 2) { b.y = canvas.height + b.radius * 2; b.x = Math.random() * canvas.width; }
     const color = colors[i % colors.length];
-    ctx.beginPath(); ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
-    const g = ctx.createRadialGradient(bubble.x - bubble.radius * 0.3, bubble.y - bubble.radius * 0.3, 0, bubble.x, bubble.y, bubble.radius);
-    g.addColorStop(0, `rgba(${color}, ${bubble.opacity * 0.8})`);
-    g.addColorStop(0.5, `rgba(${color}, ${bubble.opacity * 0.4})`);
-    g.addColorStop(1, `rgba(${color}, ${bubble.opacity * 0.1})`);
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    const g = ctx.createRadialGradient(b.x - b.radius * 0.35, b.y - b.radius * 0.35, 0, b.x, b.y, b.radius);
+    g.addColorStop(0, `rgba(${color}, ${b.opacity})`);
+    g.addColorStop(0.7, `rgba(${color}, ${b.opacity * 0.4})`);
+    g.addColorStop(1, `rgba(${color}, ${b.opacity * 0.1})`);
     ctx.fillStyle = g; ctx.fill();
-    ctx.beginPath(); ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(${color}, ${bubble.opacity * 0.6})`; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.beginPath(); ctx.arc(bubble.x - bubble.radius * 0.3, bubble.y - bubble.radius * 0.3, bubble.radius * 0.25, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${bubble.opacity * 0.8})`; ctx.fill();
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${color}, ${b.opacity * 0.8})`; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(b.x - b.radius * 0.35, b.y - b.radius * 0.35, b.radius * 0.25, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${b.opacity})`; ctx.fill();
   });
 }
 
-// 萤火虫效果
 function drawFireflies(ctx, canvas, fireflies, theme) {
   const isDark = theme === 'dark';
-  const color = isDark ? '180, 255, 100' : '100, 200, 50';
+  const color = isDark ? '200, 255, 100' : '150, 220, 50';
   fireflies.forEach(f => {
-    f.x += Math.sin(f.angle) * f.speed;
-    f.y += Math.cos(f.angle) * f.speed * 0.6;
-    f.angle += (Math.random() - 0.5) * 0.1;
-    f.glow += f.glowSpeed;
-    const opacity = 0.3 + Math.sin(f.glow) * 0.5;
-    if (f.x < -20) f.x = canvas.width + 20;
-    if (f.x > canvas.width + 20) f.x = -20;
-    if (f.y < -20) f.y = canvas.height + 20;
-    if (f.y > canvas.height + 20) f.y = -20;
-
-    const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.radius * 5);
+    f.x += Math.sin(f.angle) * f.speed; f.y += Math.cos(f.angle) * f.speed * 0.5;
+    f.angle += (Math.random() - 0.5) * 0.15; f.glow += f.glowSpeed;
+    const opacity = 0.4 + Math.sin(f.glow) * 0.5;
+    if (f.x < -30) f.x = canvas.width + 30; if (f.x > canvas.width + 30) f.x = -30;
+    if (f.y < -30) f.y = canvas.height + 30; if (f.y > canvas.height + 30) f.y = -30;
+    const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.radius * 8);
     g.addColorStop(0, `rgba(${color}, ${opacity})`);
-    g.addColorStop(0.3, `rgba(${color}, ${opacity * 0.4})`);
+    g.addColorStop(0.2, `rgba(${color}, ${opacity * 0.5})`);
     g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.beginPath(); ctx.arc(f.x, f.y, f.radius * 5, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.radius * 8, 0, Math.PI * 2);
     ctx.fillStyle = g; ctx.fill();
-    ctx.beginPath(); ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.radius * 2, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(${color}, ${opacity + 0.3})`; ctx.fill();
   });
 }
 
-// 流星效果
 function drawMeteors(ctx, canvas, meteors, theme) {
   const isDark = theme === 'dark';
-  const color = isDark ? '255, 255, 255' : '100, 150, 255';
+  const color = isDark ? '200, 220, 255' : '100, 150, 255';
   meteors.forEach(m => {
-    m.x += m.vx; m.y += m.vy; m.life -= 0.008;
+    m.x += m.vx; m.y += m.vy; m.life -= 0.006;
     if (m.life <= 0) {
-      m.x = Math.random() * canvas.width * 1.5;
-      m.y = -20;
-      m.vx = -(3 + Math.random() * 4);
-      m.vy = 3 + Math.random() * 4;
-      m.life = 0.6 + Math.random() * 0.4;
-      m.length = 60 + Math.random() * 80;
+      m.x = Math.random() * canvas.width * 1.5; m.y = -30;
+      m.vx = -(4 + Math.random() * 5); m.vy = 4 + Math.random() * 5;
+      m.life = 0.7 + Math.random() * 0.3; m.length = 80 + Math.random() * 100;
     }
-    const tailX = m.x - m.vx * m.length * 0.3;
-    const tailY = m.y - m.vy * m.length * 0.3;
+    const tailX = m.x - m.vx * m.length * 0.25; const tailY = m.y - m.vy * m.length * 0.25;
     const g = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
-    g.addColorStop(0, `rgba(${color}, ${m.life})`);
+    g.addColorStop(0, `rgba(255,255,255,${m.life})`);
+    g.addColorStop(0.3, `rgba(${color}, ${m.life * 0.8})`);
     g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tailX, tailY);
-    ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.stroke();
-    ctx.beginPath(); ctx.arc(m.x, m.y, 2, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${color}, ${m.life})`; ctx.fill();
+    ctx.strokeStyle = g; ctx.lineWidth = 3; ctx.stroke();
+    const g2 = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 15);
+    g2.addColorStop(0, `rgba(255,255,255,${m.life})`);
+    g2.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(m.x, m.y, 15, 0, Math.PI * 2);
+    ctx.fillStyle = g2; ctx.fill();
   });
 }
 
-// 极光效果
 function drawAurora(ctx, canvas, time, theme) {
   const isDark = theme === 'dark';
   const colors = isDark
-    ? ['rgba(0, 255, 128, 0.15)', 'rgba(0, 200, 255, 0.12)', 'rgba(150, 0, 255, 0.1)']
-    : ['rgba(0, 200, 100, 0.12)', 'rgba(0, 150, 255, 0.1)', 'rgba(120, 0, 200, 0.08)'];
-
-  for (let i = 0; i < 3; i++) {
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height);
-    for (let x = 0; x <= canvas.width; x += 8) {
-      const y = canvas.height * 0.3 +
-        Math.sin(x * 0.003 + time * (0.5 + i * 0.2) + i * 1.5) * 80 +
-        Math.sin(x * 0.007 + time * (0.3 + i * 0.1)) * 40 +
-        Math.cos(x * 0.002 + time * 0.2 + i) * 60;
+    ? ['rgba(0, 255, 150, 0.25)', 'rgba(0, 200, 255, 0.2)', 'rgba(180, 0, 255, 0.18)', 'rgba(0, 150, 255, 0.15)']
+    : ['rgba(0, 180, 100, 0.15)', 'rgba(0, 150, 200, 0.12)', 'rgba(100, 0, 180, 0.1)', 'rgba(0, 120, 180, 0.08)'];
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath(); ctx.moveTo(0, canvas.height);
+    for (let x = 0; x <= canvas.width; x += 6) {
+      const y = canvas.height * (0.25 + i * 0.08) +
+        Math.sin(x * 0.002 + time * (0.3 + i * 0.15) + i * 1.2) * (60 + i * 20) +
+        Math.sin(x * 0.005 + time * (0.2 + i * 0.1)) * 30 +
+        Math.cos(x * 0.001 + time * 0.15 + i * 0.8) * 40;
       ctx.lineTo(x, y);
     }
-    ctx.lineTo(canvas.width, canvas.height);
-    ctx.closePath();
-    ctx.fillStyle = colors[i];
-    ctx.fill();
+    ctx.lineTo(canvas.width, canvas.height); ctx.closePath();
+    ctx.fillStyle = colors[i]; ctx.fill();
   }
 }
 
@@ -208,8 +195,8 @@ function ThreeScene({ effect, theme }) {
     sceneRef.current = true;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
@@ -219,65 +206,95 @@ function ThreeScene({ effect, theme }) {
     let objects = [];
 
     if (effect === 'geometry') {
-      // 旋转几何体
-      const geometries = [
-        new THREE.IcosahedronGeometry(1, 0),
-        new THREE.OctahedronGeometry(0.8, 0),
-        new THREE.TetrahedronGeometry(0.7, 0),
-        new THREE.TorusGeometry(0.6, 0.2, 8, 16),
-        new THREE.DodecahedronGeometry(0.7, 0),
-        new THREE.TorusKnotGeometry(0.5, 0.15, 64, 8),
+      // 精美几何体 - 使用材质发光效果
+      const geometryData = [
+        { geo: new THREE.IcosahedronGeometry(1.2, 1), pos: [-4, 2, -8], color: isDark ? 0x00ffff : 0x0099ff },
+        { geo: new THREE.OctahedronGeometry(1, 0), pos: [3, -1, -6], color: isDark ? 0xff00ff : 0x9900ff },
+        { geo: new THREE.TetrahedronGeometry(0.9, 0), pos: [-2, -2, -5], color: isDark ? 0x00ff88 : 0x00cc66 },
+        { geo: new THREE.TorusGeometry(0.8, 0.25, 16, 32), pos: [4, 2, -7], color: isDark ? 0xff6600 : 0xcc4400 },
+        { geo: new THREE.DodecahedronGeometry(0.9, 0), pos: [0, 3, -9], color: isDark ? 0xffff00 : 0xcccc00 },
+        { geo: new THREE.TorusKnotGeometry(0.6, 0.2, 100, 16), pos: [-3, 0, -4], color: isDark ? 0xff0066 : 0xcc0044 },
       ];
-      const colors = isDark ? [0x00aaff, 0xaa00ff, 0x00ffaa, 0xff6600, 0xff00aa, 0xffff00] : [0x0077cc, 0x7700cc, 0x00cc77, 0xcc5500, 0xcc0077, 0xcccc00];
 
-      for (let i = 0; i < 20; i++) {
-        const geo = geometries[i % geometries.length];
-        const mat = new THREE.MeshBasicMaterial({
-          color: colors[i % colors.length],
-          wireframe: true,
+      geometryData.forEach((item, i) => {
+        const mat = new THREE.MeshPhongMaterial({
+          color: item.color,
+          emissive: item.color,
+          emissiveIntensity: 0.3,
+          shininess: 100,
           transparent: true,
-          opacity: 0.3 + Math.random() * 0.3,
+          opacity: 0.9,
+          wireframe: false,
         });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(
-          (Math.random() - 0.5) * 15,
-          (Math.random() - 0.5) * 10,
-          (Math.random() - 0.5) * 10 - 5
-        );
-        mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+        const mesh = new THREE.Mesh(item.geo, mat);
+        mesh.position.set(...item.pos);
         mesh.userData = {
-          rotSpeed: { x: (Math.random() - 0.5) * 0.02, y: (Math.random() - 0.5) * 0.02 },
-          floatSpeed: Math.random() * 0.005 + 0.002,
-          floatOffset: Math.random() * Math.PI * 2,
-          baseY: mesh.position.y,
+          rotSpeed: { x: 0.003 + i * 0.001, y: 0.005 + i * 0.002, z: 0.002 },
+          floatSpeed: 0.8 + i * 0.1,
+          floatOffset: i * 1.2,
+          baseY: item.pos[1],
         };
         scene.add(mesh);
         objects.push(mesh);
-      }
-      camera.position.z = 8;
+
+        // 边框
+        const edges = new THREE.EdgesGeometry(item.geo);
+        const lineMat = new THREE.LineBasicMaterial({ color: item.color, transparent: true, opacity: 0.6 });
+        const wireframe = new THREE.LineSegments(edges, lineMat);
+        wireframe.position.copy(mesh.position);
+        wireframe.rotation.copy(mesh.rotation);
+        wireframe.userData = mesh.userData;
+        scene.add(wireframe);
+        objects.push(wireframe);
+      });
+
+      // 光源
+      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambient);
+      const pointLight1 = new THREE.PointLight(isDark ? 0x00ffff : 0x0099ff, 1, 20);
+      pointLight1.position.set(5, 5, 5);
+      scene.add(pointLight1);
+      const pointLight2 = new THREE.PointLight(isDark ? 0xff00ff : 0x9900ff, 1, 20);
+      pointLight2.position.set(-5, -3, 5);
+      scene.add(pointLight2);
+
+      camera.position.set(0, 0, 8);
 
     } else if (effect === 'galaxy') {
-      // 星系旋涡
-      const count = 3000;
+      // 华丽星系
+      const count = 5000;
       const positions = new Float32Array(count * 3);
       const colors_arr = new Float32Array(count * 3);
-      const color1 = new THREE.Color(isDark ? 0x00aaff : 0x0066cc);
-      const color2 = new THREE.Color(isDark ? 0xaa00ff : 0x6600cc);
-      const color3 = new THREE.Color(isDark ? 0x00ffaa : 0x00cc77);
+      const coreColors = [
+        new THREE.Color(isDark ? 0xffd700 : 0xffaa00), // 金色核心
+        new THREE.Color(isDark ? 0xffffff : 0xffffee), // 白色核心
+        new THREE.Color(isDark ? 0x00ffff : 0x0099ff), // 青色
+      ];
+      const armColors = [
+        new THREE.Color(isDark ? 0x0066ff : 0x0044cc),
+        new THREE.Color(isDark ? 0xff00ff : 0xcc00cc),
+        new THREE.Color(isDark ? 0x00ffcc : 0x00cc99),
+      ];
 
       for (let i = 0; i < count; i++) {
-        const angle = (i / count) * Math.PI * 8;
-        const radius = Math.random() * 5 + 0.5;
-        const armOffset = (i % 3) * (Math.PI * 2 / 3);
-        positions[i * 3] = Math.cos(angle + armOffset) * radius + (Math.random() - 0.5) * 0.8;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 0.5;
-        positions[i * 3 + 2] = Math.sin(angle + armOffset) * radius + (Math.random() - 0.5) * 0.8;
+        const arm = i % 3;
+        const t = i / count;
+        const angle = t * Math.PI * 12 + arm * (Math.PI * 2 / 3);
+        const radius = Math.pow(t, 0.6) * 12;
+        const spread = (1 - t) * 2 + Math.random() * 0.5;
+
+        positions[i * 3] = Math.cos(angle) * radius + (Math.random() - 0.5) * spread;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * (1 - t) * 1.5;
+        positions[i * 3 + 2] = Math.sin(angle) * radius + (Math.random() - 0.5) * spread;
 
         const mixColor = new THREE.Color();
-        const t = Math.random();
-        if (t < 0.33) mixColor.lerpColors(color1, color2, t * 3);
-        else if (t < 0.66) mixColor.lerpColors(color2, color3, (t - 0.33) * 3);
-        else mixColor.lerpColors(color3, color1, (t - 0.66) * 3);
+        if (t < 0.15) {
+          mixColor.lerpColors(coreColors[0], coreColors[1], t / 0.15);
+        } else {
+          const armColor = armColors[arm];
+          const blend = (t - 0.15) / 0.85;
+          mixColor.lerpColors(coreColors[1], armColor, blend * 0.8);
+        }
         colors_arr[i * 3] = mixColor.r;
         colors_arr[i * 3 + 1] = mixColor.g;
         colors_arr[i * 3 + 2] = mixColor.b;
@@ -286,11 +303,38 @@ function ThreeScene({ effect, theme }) {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geo.setAttribute('color', new THREE.BufferAttribute(colors_arr, 3));
-      const mat = new THREE.PointsMaterial({ size: 0.04, vertexColors: true, transparent: true, opacity: 0.8 });
+      const mat = new THREE.PointsMaterial({
+        size: isDark ? 0.08 : 0.06,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.9,
+        sizeAttenuation: true,
+      });
       const points = new THREE.Points(geo, mat);
       scene.add(points);
       objects.push(points);
-      camera.position.set(0, 4, 6);
+
+      // 中心光晕
+      const glowGeo = new THREE.SphereGeometry(0.5, 32, 32);
+      const glowMat = new THREE.MeshBasicMaterial({
+        color: isDark ? 0xffd700 : 0xffaa00,
+        transparent: true,
+        opacity: 0.6,
+      });
+      const glow = new THREE.Mesh(glowGeo, glowMat);
+      scene.add(glow);
+
+      // 外层光晕
+      const outerGlowGeo = new THREE.SphereGeometry(1.5, 32, 32);
+      const outerGlowMat = new THREE.MeshBasicMaterial({
+        color: isDark ? 0xff6600 : 0xff8800,
+        transparent: true,
+        opacity: 0.2,
+      });
+      const outerGlow = new THREE.Mesh(outerGlowGeo, outerGlowMat);
+      scene.add(outerGlow);
+
+      camera.position.set(0, 8, 14);
       camera.lookAt(0, 0, 0);
     }
 
@@ -307,13 +351,16 @@ function ThreeScene({ effect, theme }) {
       const t = Date.now() * 0.001;
 
       if (effect === 'geometry') {
-        objects.forEach(mesh => {
-          mesh.rotation.x += mesh.userData.rotSpeed.x;
-          mesh.rotation.y += mesh.userData.rotSpeed.y;
-          mesh.position.y = mesh.userData.baseY + Math.sin(t * mesh.userData.floatSpeed * 100 + mesh.userData.floatOffset) * 0.5;
+        objects.forEach(obj => {
+          obj.rotation.x += obj.userData.rotSpeed.x;
+          obj.rotation.y += obj.userData.rotSpeed.y;
+          obj.rotation.z += obj.userData.rotSpeed.z;
+          if (obj.userData.baseY !== undefined) {
+            obj.position.y = obj.userData.baseY + Math.sin(t * obj.userData.floatSpeed + obj.userData.floatOffset) * 0.8;
+          }
         });
       } else if (effect === 'galaxy') {
-        objects.forEach(p => { p.rotation.y += 0.002; });
+        objects.forEach(p => { p.rotation.y += 0.003; p.rotation.x += 0.001; });
       }
 
       renderer.render(scene, camera);
@@ -334,17 +381,14 @@ function ThreeScene({ effect, theme }) {
 
 // ========== 主组件 ==========
 
-const CANVAS_EFFECTS = ['particles', 'stars', 'waves', 'snow', 'bubbles', 'fireflies', 'meteors', 'aurora'];
 const THREE_EFFECTS = ['geometry', 'galaxy'];
 
 export default function AnimatedBackground({ enabled, theme, effect = 'particles' }) {
   const canvasRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
   const itemsRef = useRef([]);
-
   const isThreeEffect = THREE_EFFECTS.includes(effect);
 
-  // Canvas 2D 效果
   useEffect(() => {
     if (!enabled || isThreeEffect) return;
     const canvas = canvasRef.current;
@@ -356,29 +400,28 @@ export default function AnimatedBackground({ enabled, theme, effect = 'particles
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initItems(); };
 
     const initItems = () => {
-      const items = [];
-      const w = canvas.width, h = canvas.height;
+      const items = []; const w = canvas.width, h = canvas.height;
       switch (effect) {
         case 'particles':
-          for (let i = 0; i < 50; i++) items.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5, radius: Math.random() * 2.5 + 1 });
+          for (let i = 0; i < 45; i++) items.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4, radius: Math.random() * 2.5 + 1 });
           break;
         case 'stars':
-          for (let i = 0; i < 80; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: Math.random() * 2 + 0.5, twinkle: Math.random() * Math.PI * 2, twinkleSpeed: 0.02 + Math.random() * 0.04 });
+          for (let i = 0; i < 100; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: Math.random() * 2.5 + 0.8, twinkle: Math.random() * Math.PI * 2, twinkleSpeed: 0.015 + Math.random() * 0.03 });
           break;
         case 'waves':
-          for (let i = 0; i < 3; i++) items.push({ y: h * (0.5 + i * 0.2), amplitude: 40 + i * 15, frequency: 0.002 + i * 0.0005, speed: 0.03 + i * 0.015, offset: i * 2 });
+          for (let i = 0; i < 3; i++) items.push({ y: h * (0.45 + i * 0.2), amplitude: 50 + i * 20, frequency: 0.0015 + i * 0.0003, speed: 0.025 + i * 0.01, offset: i * 2.5 });
           break;
         case 'snow':
-          for (let i = 0; i < 60; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: Math.random() * 2 + 1.5, speed: 1 + Math.random() * 2, rotation: Math.random() * Math.PI * 2, opacity: 0.5 + Math.random() * 0.4 });
+          for (let i = 0; i < 70; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: Math.random() * 2.5 + 1.5, speed: 0.8 + Math.random() * 1.8, rotation: Math.random() * Math.PI * 2, opacity: 0.5 + Math.random() * 0.4 });
           break;
         case 'bubbles':
-          for (let i = 0; i < 40; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: 8 + Math.random() * 20, speed: 0.5 + Math.random() * 1, opacity: 0.15 + Math.random() * 0.25 });
+          for (let i = 0; i < 35; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: 10 + Math.random() * 25, speed: 0.4 + Math.random() * 0.8, opacity: 0.12 + Math.random() * 0.2 });
           break;
         case 'fireflies':
-          for (let i = 0; i < 35; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: 1.5 + Math.random() * 1.5, speed: 0.3 + Math.random() * 0.5, angle: Math.random() * Math.PI * 2, glow: Math.random() * Math.PI * 2, glowSpeed: 0.03 + Math.random() * 0.04 });
+          for (let i = 0; i < 30; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: 2 + Math.random() * 2, speed: 0.25 + Math.random() * 0.4, angle: Math.random() * Math.PI * 2, glow: Math.random() * Math.PI * 2, glowSpeed: 0.025 + Math.random() * 0.03 });
           break;
         case 'meteors':
-          for (let i = 0; i < 8; i++) items.push({ x: Math.random() * w * 1.5, y: Math.random() * h * 0.5, vx: -(3 + Math.random() * 4), vy: 3 + Math.random() * 4, life: Math.random(), length: 60 + Math.random() * 80 });
+          for (let i = 0; i < 6; i++) items.push({ x: Math.random() * w * 1.5, y: Math.random() * h * 0.4, vx: -(4 + Math.random() * 5), vy: 4 + Math.random() * 5, life: Math.random(), length: 80 + Math.random() * 100 });
           break;
         case 'aurora':
           break;
@@ -402,28 +445,15 @@ export default function AnimatedBackground({ enabled, theme, effect = 'particles
       animationId = requestAnimationFrame(draw);
     };
 
-    resize();
-    window.addEventListener('resize', resize);
-    animationId = requestAnimationFrame(draw);
-    setIsReady(true);
+    resize(); window.addEventListener('resize', resize); animationId = requestAnimationFrame(draw); setIsReady(true);
     return () => { window.removeEventListener('resize', resize); if (animationId) cancelAnimationFrame(animationId); };
   }, [enabled, theme, effect, isThreeEffect]);
 
   if (!enabled) return null;
 
-  if (isThreeEffect) {
-    return <ThreeScene effect={effect} theme={theme} />;
-  }
+  if (isThreeEffect) return <ThreeScene effect={effect} theme={theme} />;
 
   return (
-    <canvas
-      ref={canvasRef}
-      className={styles.canvas}
-      style={{
-        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-        pointerEvents: 'none', zIndex: 0,
-        opacity: isReady ? 1 : 0, transition: 'opacity 0.3s ease',
-      }}
-    />
+    <canvas ref={canvasRef} className={styles.canvas} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0, opacity: isReady ? 1 : 0, transition: 'opacity 0.3s ease' }} />
   );
 }

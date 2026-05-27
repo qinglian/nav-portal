@@ -25,8 +25,9 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   padding: 20px;
-  min-width: 320px;
-  max-width: 90vw;
+  width: min(420px, calc(100vw - 32px));
+  max-height: 85vh;
+  overflow-y: auto;
   box-shadow: var(--shadow-lg);
   animation: slideUp 0.2s ease;
 }
@@ -90,15 +91,16 @@
 .wallpapers {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 10px;
 }
 
 .wallpaper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 12px;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 10px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   border: 2px solid var(--glass-border);
@@ -106,8 +108,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   color: var(--text-secondary);
-  min-height: 80px;
-  justify-content: center;
+  min-height: 70px;
 }
 
 .wallpaper:hover {
@@ -125,6 +126,16 @@
   font-weight: 500;
   color: var(--text-primary);
   text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+}
+
+.wallpaper.gradient span,
+.wallpaper.gradient2 span {
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.wallpaper.gradient2 span {
+  color: white;
 }
 
 .uploadBtn {
@@ -158,7 +169,7 @@
 
 .previewImage {
   width: 100%;
-  height: 120px;
+  height: 140px;
   object-fit: cover;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
@@ -203,10 +214,4 @@
 
 .removeBtn:hover {
   background: rgba(255, 59, 48, 0.2);
-}
-
-@media (max-width: 480px) {
-  .wallpapers {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
