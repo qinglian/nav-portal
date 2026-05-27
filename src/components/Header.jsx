@@ -143,8 +143,9 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
           </button>
           <button
             className={`${styles.iconBtn} ${animatedBg ? styles.active : ''}`}
-            onClick={animatedBg ? onOpenEffectPicker : onToggleAnimatedBg}
-            title={animatedBg ? "切换动效" : "开启动效背景"}
+            onClick={onToggleAnimatedBg}
+            onDoubleClick={animatedBg ? onOpenEffectPicker : undefined}
+            title={animatedBg ? "双击切换动效" : "开启动效背景"}
           >
             <Sparkles size={16} />
           </button>
