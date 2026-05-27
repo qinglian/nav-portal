@@ -6,6 +6,7 @@ import TimeWidget from './components/TimeWidget'
 import SearchEnginePicker from './components/SearchEnginePicker'
 import CategorySection from './components/CategorySection'
 import EditModal from './components/EditModal'
+import AnimatedBackground from './components/AnimatedBackground'
 import { Plus } from 'lucide-react'
 import styles from './App.module.css'
 
@@ -15,6 +16,9 @@ function AppContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [bgMode, setBgMode] = useState(() => {
     return localStorage.getItem('nav-bg-mode') || 'default'
+  })
+  const [animatedBg, setAnimatedBg] = useState(() => {
+    return localStorage.getItem('nav-animated-bg') === 'true'
   })
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -39,6 +43,12 @@ function AppContent() {
     const nextMode = modes[(currentIndex + 1) % modes.length]
     setBgMode(nextMode)
     localStorage.setItem('nav-bg-mode', nextMode)
+  }
+
+  const toggleAnimatedBg = () => {
+    const newValue = !animatedBg
+    setAnimatedBg(newValue)
+    localStorage.setItem('nav-animated-bg', newValue.toString())
   }
 
   // Filter
@@ -118,14 +128,19 @@ function AppContent() {
     } catch {}
   }
 
+  const { theme } = useTheme()
+
   return (
     <div className={styles.app}>
+      <AnimatedBackground enabled={animatedBg} theme={theme} />
       <Header 
         onToggleEdit={() => setIsEditMode(!isEditMode)}
         isEditMode={isEditMode}
         searchQuery={searchQuery}
         onSearch={setSearchQuery}
         onToggleBgMode={toggleBgMode}
+        animatedBg={animatedBg}
+        onToggleAnimatedBg={toggleAnimatedBg}
       />
       
       <main className={styles.main}>

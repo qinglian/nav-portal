@@ -1,10 +1,10 @@
-import { Search, Moon, Sun, Image, Edit3, Check, Settings, ChevronDown } from 'lucide-react'
+import { Search, Moon, Sun, Image, Edit3, Check, Settings, ChevronDown, Sparkles } from 'lucide-react'
 import { useState, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useData } from '../context/DataContext'
 import styles from './Header.module.css'
 
-export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode }) {
+export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg }) {
   const { theme, toggleTheme } = useTheme()
   const { data } = useData()
   const [showDataMenu, setShowDataMenu] = useState(false)
@@ -140,6 +140,13 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
           >
             {isEditMode ? <Check size={14} /> : <Edit3 size={14} />}
             <span>{isEditMode ? '完成' : '编辑'}</span>
+          </button>
+          <button 
+            className={`${styles.iconBtn} ${animatedBg ? styles.active : ''}`} 
+            onClick={onToggleAnimatedBg} 
+            title="动效背景"
+          >
+            <Sparkles size={16} />
           </button>
           <button className={styles.iconBtn} onClick={onToggleBgMode} title="切换背景">
             <Image size={16} />
