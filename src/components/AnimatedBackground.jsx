@@ -5,122 +5,100 @@ export default function AnimatedBackground({ enabled, theme }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const particlesRef = useRef([]);
-  const enabledRef = useRef(enabled);
   const themeRef = useRef(theme);
+  const enabledRef = useRef(enabled);
 
-  // 保持最新值
+  useEffect(() => {
+    themeRef.current = theme;
+  }, [theme]);
+
   useEffect(() => {
     enabledRef.current = enabled;
-    themeRef.current = theme;
-  }, [enabled, theme]);
+  }, [enabled]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
+    
     const ctx = canvas.getContext('2d');
     
-    // 初始化粒子
-    const initParticles = (width, height) => {
-      const particleCount = Math.min(Math.floor((width * height) / 20000), 60);
-      const particles = [];
-      
-      for (let i = 0; i < particleCount; i++) {
-        particles.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.3,
-          vy: (Math.random() - 0.5) * 0.3,
-          radius: Math.random() * 2 + 1,
-          opacity: Math.random() * 0.3 + 0.1,
+    const initParticles = (w, h) => {
+      const p = [];
+      const count = Math.min(Math.floor((w * h) / 25000), 50);
+      for (let i = 0; i < count; i++) {
+        p.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.25,
+          vy: (Math.random() - 0.5) * 0.25,
+          r: Math.random() * 1.5 + 0.5,
+          o: Math.random() * 0.25 + 0.08,
         });
       }
-      return particles;
+      return p;
     };
 
-    // 绘制函数
     const draw = () => {
-      if (!enabledRef.current) {
-        // 清空画布
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        return;
-      }
+      const w = canvas.width;
+      const h = canvas.height;
       
-      const width = canvas.width;
-      const height = canvas.height;
-      const particles = particlesRef.current;
+      ctx.clearRect(0, 0, w, h);
       
-      // 清空画布
-      ctx.clearRect(0, 0, width, height);
-      
-      // 根据主题设置颜色
-      const isDark = themeRef.current === 'dark';
-      const particleColor = isDark ? '255, 255, 255' : '0, 122, 255';
-      const lineColor = isDark ? '255, 255, 255' : '0, 122, 255';
-      
-      // 更新和绘制粒子
-      particles.forEach((particle, i) => {
-        // 更新位置
-        particle.x += particle.vx;
-        particle.y += particle.vy;
+      if (enabledRef.current) {
+        const isDark = themeRef.current === 'dark';
+        const c = isDark ? '255,255,255' : '0,122,255';
         
-        // 边界反弹
-        if (particle.x < 0 || particle.x > width) particle.vx *= -1;
-        if (particle.y < 0 || particle.y > height) particle.vy *= -1;
-        
-        // 绘制粒子
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${particleColor}, ${particle.opacity})`;
-        ctx.fill();
-        
-        // 绘制连线
-        for (let j = i + 1; j < particles.length; j++) {
-          const other = particles[j];
-          const dx = particle.x - other.x;
-          const dy = particle.y - other.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        particlesRef.current.forEach((p, i) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0 || p.x > w) p.vx *= -1;
+          if (p.y < 0 || p.y > h) p.vy *= -1;
           
-          if (distance < 100) {
-            ctx.beginPath();
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(other.x, other.y);
-            ctx.strokeStyle = `rgba(${lineColor}, ${0.06 * (1 - distance / 100)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      });
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${c},${p.o})`;
+          ctx.fill();
+          
+          particlesRef.current.slice(i + 1).forEach(p2 => {
+            const dx = p.x - p2.x;
+            const dy = p.y - p2.y;
+            const d = Math.sqrt(dx * dx + dy * dy);
+            if (d < 100) {
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.strokeStyle = `rgba(${c},${0.05 * (1 - d / 100)})`;
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+            }
+          });
+        });
+      }
       
       animationRef.current = requestAnimationFrame(draw);
     };
 
-    // 设置画布大小
-    const handleResize = () => {
+    const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       particlesRef.current = initParticles(canvas.width, canvas.height);
     };
-    
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    
-    // 开始动画循环
+
+    resize();
+    window.addEventListener('resize', resize);
     animationRef.current = requestAnimationFrame(draw);
     
     return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      window.removeEventListener('resize', resize);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
+    <canvas 
+      ref={canvasRef} 
       className={styles.canvas}
-      style={{ opacity: enabled ? 1 : 0 }}
+      style={{ pointerEvents: 'none' }}
     />
   );
 }

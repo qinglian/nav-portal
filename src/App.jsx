@@ -43,16 +43,16 @@ function AppContent() {
     
     if (gradients[bgMode]) {
       document.documentElement.setAttribute('data-bg', 'custom')
-      body.style.background = gradients[bgMode]
+      body.style.setProperty('background', gradients[bgMode], 'important')
       body.style.backgroundAttachment = 'fixed'
     } else if (customWallpaper && bgMode === 'custom') {
       document.documentElement.setAttribute('data-bg', 'custom')
-      body.style.background = `url(${customWallpaper}) center/cover no-repeat fixed`
+      body.style.setProperty('background', `url(${customWallpaper}) center/cover no-repeat fixed`, 'important')
     } else if (bgMode === 'custom') {
       document.documentElement.setAttribute('data-bg', 'custom')
     } else {
       document.documentElement.removeAttribute('data-bg')
-      body.style.background = ''
+      body.style.setProperty('background', '', 'important')
     }
   }, [bgMode, customWallpaper])
 
