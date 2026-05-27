@@ -8,6 +8,7 @@ import CategorySection from './components/CategorySection'
 import EditModal from './components/EditModal'
 import AnimatedBackground from './components/AnimatedBackground'
 import WallpaperPicker from './components/WallpaperPicker'
+import EffectPicker from './components/EffectPicker'
 import { Plus } from 'lucide-react'
 import styles from './App.module.css'
 
@@ -22,6 +23,8 @@ function AppContent() {
   const bgPickerRef = useRef(null)
   
   const [animatedBg, setAnimatedBg] = useState(() => localStorage.getItem('nav-animated-bg') === 'true')
+  const [bgEffect, setBgEffect] = useState(() => localStorage.getItem('nav-bg-effect') || 'particles')
+  const [showEffectPicker, setShowEffectPicker] = useState(false)
   const [modalState, setModalState] = useState({
     isOpen: false,
     mode: null,
@@ -92,6 +95,12 @@ function AppContent() {
     localStorage.setItem('nav-animated-bg', newValue.toString())
   }
 
+  const handleSelectEffect = (effect) => {
+    setBgEffect(effect)
+    localStorage.setItem('nav-bg-effect', effect)
+    setShowEffectPicker(false)
+  }
+
   // Filter
   const filteredCategories = useMemo(() => {
     if (!searchQuery) return data.categories
@@ -147,7 +156,7 @@ function AppContent() {
 
   return (
     <div className={styles.app}>
-      <AnimatedBackground enabled={animatedBg} theme={theme} />
+      <AnimatedBackground enabled={animatedBg} theme={theme} effect={bgEffect} />
       
       <div ref={bgPickerRef} className={styles.bgPickerContainer}>
         <Header 
@@ -158,11 +167,12 @@ function AppContent() {
           onToggleBgMode={toggleBgMode}
           animatedBg={animatedBg}
           onToggleAnimatedBg={toggleAnimatedBg}
-        />
+        onOpenEffectPicker={() => setShowEffectPicker(true)}
+      />
         
         {showBgPicker && (
           <div className={styles.bgPicker}>
-            <WallpaperPicker 
+            <WallpaperPicker
               currentWallpaper={bgMode === 'custom' && customWallpaper ? customWallpaper : bgMode}
               onSelect={handleSelectPreset}
               onUpload={handleUploadWallpaper}
@@ -170,6 +180,14 @@ function AppContent() {
           </div>
         )}
       </div>
+
+      {showEffectPicker && (
+        <EffectPicker
+          currentEffect={bgEffect}
+          onSelect={handleSelectEffect}
+          onClose={() => setShowEffectPicker(false)}
+        />
+      )}
       
       <main className={styles.main}>
         <div className={styles.content}>

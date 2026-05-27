@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext'
 import { useData } from '../context/DataContext'
 import styles from './Header.module.css'
 
-export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg }) {
+export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker }) {
   const { theme, toggleTheme } = useTheme()
   const { data } = useData()
   const [showDataMenu, setShowDataMenu] = useState(false)
@@ -141,10 +141,10 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
             {isEditMode ? <Check size={14} /> : <Edit3 size={14} />}
             <span>{isEditMode ? '完成' : '编辑'}</span>
           </button>
-          <button 
-            className={`${styles.iconBtn} ${animatedBg ? styles.active : ''}`} 
-            onClick={onToggleAnimatedBg} 
-            title="动效背景"
+          <button
+            className={`${styles.iconBtn} ${animatedBg ? styles.active : ''}`}
+            onClick={animatedBg ? onOpenEffectPicker : onToggleAnimatedBg}
+            title={animatedBg ? "切换动效" : "开启动效背景"}
           >
             <Sparkles size={16} />
           </button>
