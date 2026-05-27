@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react'
-import { ThemeProvider } from './context/ThemeContext'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { ThemeProvider, useTheme } from './context/ThemeContext'
 import { DataProvider, useData } from './context/DataContext'
 import Header from './components/Header'
 import TimeWidget from './components/TimeWidget'
@@ -7,42 +7,74 @@ import SearchEnginePicker from './components/SearchEnginePicker'
 import CategorySection from './components/CategorySection'
 import EditModal from './components/EditModal'
 import AnimatedBackground from './components/AnimatedBackground'
+import WallpaperPicker from './components/WallpaperPicker'
 import { Plus } from 'lucide-react'
 import styles from './App.module.css'
 
 function AppContent() {
   const { data, addCategory, updateCategory, deleteCategory, addSite, updateSite, deleteSite, reorderSites, reorderCategories, reorderTags } = useData()
+  const { theme } = useTheme()
   const [isEditMode, setIsEditMode] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [bgMode, setBgMode] = useState(() => {
-    return localStorage.getItem('nav-bg-mode') || 'default'
-  })
-  const [animatedBg, setAnimatedBg] = useState(() => {
-    return localStorage.getItem('nav-animated-bg') === 'true'
-  })
-  const [modalState, setModalState] = useState({
-    isOpen: false,
-    mode: null,
-    data: null,
-    categoryId: null,
-    categoryTags: []
-  })
+  const [bgMode, setBgMode] = useState(() => localStorage.getItem('nav-bg-mode') || 'default')
+  const [customWallpaper, setCustomWallpaper] = useState(() => localStorage.getItem('nav-custom-wallpaper') || '')
+  const [showBgPicker, setShowBgPicker] = useState(false)
+  const bgPickerRef = useRef(null)
+  
+  const [animatedBg, setAnimatedBg] = useState(() => localStorage.getItem('nav-animated-bg') === 'true')
 
   // Apply background mode
   useEffect(() => {
-    if (bgMode === 'custom') {
-      document.documentElement.setAttribute('data-bg', 'custom')
+    const html = document.documentElement
+    
+    if (bgMode === 'gradient1') {
+      html.setAttribute('data-bg', 'custom')
+      html.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
+    } else if (bgMode === 'gradient2') {
+      html.setAttribute('data-bg', 'custom')
+      html.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 50%, #44318d 100%)'
+    } else if (customWallpaper && bgMode === 'custom') {
+      html.setAttribute('data-bg', 'custom')
+      html.style.background = `url(${customWallpaper}) center/cover no-repeat`
+    } else if (bgMode === 'custom') {
+      html.setAttribute('data-bg', 'custom')
     } else {
-      document.documentElement.removeAttribute('data-bg')
+      html.removeAttribute('data-bg')
+      html.style.background = ''
     }
-  }, [bgMode])
+  }, [bgMode, customWallpaper])
+
+  // Close bg picker on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (bgPickerRef.current && !bgPickerRef.current.contains(e.target)) {
+        setShowBgPicker(false)
+      }
+    }
+    if (showBgPicker) {
+      document.addEventListener('mousedown', handleClick)
+    }
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showBgPicker])
 
   const toggleBgMode = () => {
-    const modes = ['default', 'custom']
-    const currentIndex = modes.indexOf(bgMode)
-    const nextMode = modes[(currentIndex + 1) % modes.length]
-    setBgMode(nextMode)
-    localStorage.setItem('nav-bg-mode', nextMode)
+    setShowBgPicker(!showBgPicker)
+  }
+
+  const handleSelectPreset = (presetId) => {
+    setBgMode(presetId)
+    localStorage.setItem('nav-bg-mode', presetId)
+    if (presetId !== 'custom') {
+      setCustomWallpaper('')
+      localStorage.removeItem('nav-custom-wallpaper')
+    }
+  }
+
+  const handleUploadWallpaper = (dataUrl) => {
+    setBgMode('custom')
+    setCustomWallpaper(dataUrl)
+    localStorage.setItem('nav-bg-mode', 'custom')
+    localStorage.setItem('nav-custom-wallpaper', dataUrl)
   }
 
   const toggleAnimatedBg = () => {
@@ -104,44 +136,31 @@ function AppContent() {
     if (confirm('确定要删除这个分类吗？')) deleteCategory(categoryId)
   }
 
-  // 分类拖拽排序
-  const handleCategoryDragStart = (e, index) => {
-    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'category', index }))
-    e.currentTarget.style.opacity = '0.5'
-  }
-  const handleCategoryDragEnd = (e) => {
-    e.currentTarget.style.opacity = '1'
-  }
-  const handleCategoryDragOver = (e) => {
-    e.preventDefault()
-  }
-  const handleCategoryDrop = (e, targetIndex) => {
-    e.preventDefault()
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('text/plain'))
-      if (data.type === 'category') {
-        const cats = [...filteredCategories]
-        const [moved] = cats.splice(data.index, 1)
-        cats.splice(targetIndex, 0, moved)
-        reorderCategories(cats)
-      }
-    } catch {}
-  }
-
-  const { theme } = useTheme()
-
   return (
     <div className={styles.app}>
       <AnimatedBackground enabled={animatedBg} theme={theme} />
-      <Header 
-        onToggleEdit={() => setIsEditMode(!isEditMode)}
-        isEditMode={isEditMode}
-        searchQuery={searchQuery}
-        onSearch={setSearchQuery}
-        onToggleBgMode={toggleBgMode}
-        animatedBg={animatedBg}
-        onToggleAnimatedBg={toggleAnimatedBg}
-      />
+      
+      <div ref={bgPickerRef} className={styles.bgPickerContainer}>
+        <Header 
+          onToggleEdit={() => setIsEditMode(!isEditMode)}
+          isEditMode={isEditMode}
+          searchQuery={searchQuery}
+          onSearch={setSearchQuery}
+          onToggleBgMode={toggleBgMode}
+          animatedBg={animatedBg}
+          onToggleAnimatedBg={toggleAnimatedBg}
+        />
+        
+        {showBgPicker && (
+          <div className={styles.bgPicker}>
+            <WallpaperPicker 
+              currentWallpaper={bgMode === 'custom' && customWallpaper ? customWallpaper : bgMode}
+              onSelect={handleSelectPreset}
+              onUpload={handleUploadWallpaper}
+            />
+          </div>
+        )}
+      </div>
       
       <main className={styles.main}>
         <div className={styles.content}>

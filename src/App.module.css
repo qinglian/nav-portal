@@ -81,3 +81,57 @@
   font-size: 12px;
   color: var(--text-tertiary);
 }
+
+/* 背景选择器 */
+.bgPickerContainer {
+  position: relative;
+  z-index: 100;
+}
+
+.bgPicker {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 320px;
+  max-width: 400px;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 16px;
+  animation: pickerFadeIn 0.2s ease-out;
+}
+
+@keyframes pickerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .bgPicker {
+    left: 16px;
+    right: 16px;
+    transform: none;
+    min-width: auto;
+  }
+
+  @keyframes pickerFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
