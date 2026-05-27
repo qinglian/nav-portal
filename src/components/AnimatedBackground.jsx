@@ -4,13 +4,26 @@ import styles from './AnimatedBackground.module.css';
 
 // ========== Canvas 2D 效果 ==========
 
-function drawParticles(ctx, canvas, particles, theme) {
+function drawParticles(ctx, canvas, particles, theme, mouse) {
   const isDark = theme === 'dark';
   const color = isDark ? '100, 200, 255' : '0, 122, 255';
   particles.forEach((p, i) => {
+    // 鼠标交互 - 粒子被鼠标吸引
+    const dx = mouse.x - p.x;
+    const dy = mouse.y - p.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 150) {
+      p.vx += dx * 0.0001;
+      p.vy += dy * 0.0001;
+    }
+    
     p.x += p.vx; p.y += p.vy;
+    // 阻尼
+    p.vx *= 0.99; p.vy *= 0.99;
+    
     if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
     if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+    
     const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
     g.addColorStop(0, `rgba(${color}, 0.6)`);
     g.addColorStop(0.4, `rgba(${color}, 0.2)`);
@@ -19,51 +32,67 @@ function drawParticles(ctx, canvas, particles, theme) {
     ctx.fillStyle = g; ctx.fill();
     ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(${color}, 1)`; ctx.fill();
+    
     for (let j = i + 1; j < particles.length; j++) {
       const p2 = particles[j];
-      const dx = p.x - p2.x, dy = p.y - p2.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 120) {
+      const dx2 = p.x - p2.x, dy2 = p.y - p2.y;
+      const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+      if (dist2 < 120) {
         ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
-        ctx.strokeStyle = `rgba(${color}, ${0.25 * (1 - dist / 120)})`;
+        ctx.strokeStyle = `rgba(${color}, ${0.25 * (1 - dist2 / 120)})`;
         ctx.lineWidth = 1; ctx.stroke();
       }
     }
   });
 }
 
-function drawStars(ctx, canvas, stars, theme) {
+function drawStars(ctx, canvas, stars, theme, mouse) {
   const isDark = theme === 'dark';
   const color = isDark ? '255, 255, 255' : '0, 100, 200';
   stars.forEach(star => {
     star.twinkle += star.twinkleSpeed;
     const opacity = 0.5 + Math.sin(star.twinkle) * 0.5;
-    const g = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.radius * 6);
+    
+    // 鼠标交互 - 星星被鼠标推开
+    const dx = star.x - mouse.x;
+    const dy = star.y - mouse.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    let offsetX = 0, offsetY = 0;
+    if (dist < 100) {
+      offsetX = (dx / dist) * (100 - dist) * 0.3;
+      offsetY = (dy / dist) * (100 - dist) * 0.3;
+    }
+    
+    const g = ctx.createRadialGradient(star.x + offsetX, star.y + offsetY, 0, star.x + offsetX, star.y + offsetY, star.radius * 6);
     g.addColorStop(0, `rgba(${color}, ${opacity})`);
     g.addColorStop(0.3, `rgba(${color}, ${opacity * 0.3})`);
     g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.beginPath(); ctx.arc(star.x, star.y, star.radius * 6, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(star.x + offsetX, star.y + offsetY, star.radius * 6, 0, Math.PI * 2);
     ctx.fillStyle = g; ctx.fill();
-    ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(star.x + offsetX, star.y + offsetY, star.radius, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255,255,255,${opacity})`; ctx.fill();
     if (star.radius > 1.2) {
       ctx.beginPath();
-      ctx.moveTo(star.x - star.radius * 4, star.y); ctx.lineTo(star.x + star.radius * 4, star.y);
-      ctx.moveTo(star.x, star.y - star.radius * 4); ctx.lineTo(star.x, star.y + star.radius * 4);
+      ctx.moveTo(star.x + offsetX - star.radius * 4, star.y + offsetY); ctx.lineTo(star.x + offsetX + star.radius * 4, star.y + offsetY);
+      ctx.moveTo(star.x + offsetX, star.y + offsetY - star.radius * 4); ctx.lineTo(star.x + offsetX, star.y + offsetY + star.radius * 4);
       ctx.strokeStyle = `rgba(${color}, ${opacity * 0.7})`; ctx.lineWidth = 1; ctx.stroke();
     }
   });
 }
 
-function drawWaves(ctx, canvas, waves, theme, time) {
+function drawWaves(ctx, canvas, waves, theme, time, mouse) {
   const isDark = theme === 'dark';
   const colors = isDark
     ? ['rgba(0, 200, 255, 0.6)', 'rgba(150, 0, 255, 0.5)', 'rgba(0, 255, 150, 0.4)']
     : ['rgba(0, 150, 255, 0.5)', 'rgba(100, 50, 200, 0.4)', 'rgba(0, 200, 200, 0.35)'];
+  
+  // 鼠标影响波浪高度
+  const mouseInfluence = (mouse.y / canvas.height - 0.5) * 50;
+  
   waves.forEach((wave, index) => {
     ctx.beginPath(); ctx.moveTo(0, canvas.height);
     for (let x = 0; x <= canvas.width; x += 4) {
-      ctx.lineTo(x, wave.y + Math.sin(x * wave.frequency + time * wave.speed + wave.offset) * wave.amplitude);
+      ctx.lineTo(x, wave.y + Math.sin(x * wave.frequency + time * wave.speed + wave.offset) * (wave.amplitude + mouseInfluence * (index + 1) * 0.3));
     }
     ctx.lineTo(canvas.width, canvas.height); ctx.closePath();
     const g = ctx.createLinearGradient(0, wave.y - wave.amplitude, 0, canvas.height);
@@ -72,19 +101,33 @@ function drawWaves(ctx, canvas, waves, theme, time) {
     ctx.fillStyle = g; ctx.fill();
     ctx.beginPath();
     for (let x = 0; x <= canvas.width; x += 4) {
-      const y = wave.y + Math.sin(x * wave.frequency + time * wave.speed + wave.offset) * wave.amplitude;
+      const y = wave.y + Math.sin(x * wave.frequency + time * wave.speed + wave.offset) * (wave.amplitude + mouseInfluence * (index + 1) * 0.3);
       x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.strokeStyle = colors[index].replace(/[\d.]+\)$/, '1)'); ctx.lineWidth = 2; ctx.stroke();
   });
 }
 
-function drawSnow(ctx, canvas, snowflakes, theme) {
+function drawSnow(ctx, canvas, snowflakes, theme, mouse) {
   const isDark = theme === 'dark';
   const color = isDark ? '220, 240, 255' : '180, 210, 255';
   snowflakes.forEach(flake => {
-    flake.y += flake.speed; flake.x += Math.sin(flake.y * 0.008 + flake.rotation) * 0.6; flake.rotation += 0.015;
+    // 鼠标交互 - 雪花被鼠标吹散
+    const dx = flake.x - mouse.x;
+    const dy = flake.y - mouse.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 120) {
+      flake.vx = (dx / dist) * 2;
+      flake.vy = (dy / dist) * 2;
+    }
+    
+    flake.y += flake.speed + (flake.vy || 0); 
+    flake.x += Math.sin(flake.y * 0.008 + flake.rotation) * 0.6 + (flake.vx || 0);
+    flake.rotation += 0.015;
+    flake.vx *= 0.95; flake.vy *= 0.95;
+    
     if (flake.y > canvas.height) { flake.y = -15; flake.x = Math.random() * canvas.width; }
+    
     ctx.save(); ctx.translate(flake.x, flake.y); ctx.rotate(flake.rotation);
     for (let i = 0; i < 6; i++) {
       ctx.rotate(Math.PI / 3);
@@ -100,12 +143,25 @@ function drawSnow(ctx, canvas, snowflakes, theme) {
   });
 }
 
-function drawBubbles(ctx, canvas, bubbles, theme) {
+function drawBubbles(ctx, canvas, bubbles, theme, mouse) {
   const isDark = theme === 'dark';
   const colors = isDark ? ['80, 200, 255', '180, 100, 255', '100, 255, 200'] : ['0, 150, 255', '150, 100, 255', '50, 200, 200'];
   bubbles.forEach((b, i) => {
-    b.y -= b.speed; b.x += Math.sin(b.y * 0.015 + i) * 0.4;
+    // 鼠标交互 - 气泡被鼠标推开
+    const dx = b.x - mouse.x;
+    const dy = b.y - mouse.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 100) {
+      b.vx = (dx / dist) * 3;
+      b.vy = (dy / dist) * 3;
+    }
+    
+    b.y -= b.speed + (b.vy || 0); 
+    b.x += Math.sin(b.y * 0.015 + i) * 0.4 + (b.vx || 0);
+    b.vx *= 0.95; b.vy *= 0.95;
+    
     if (b.y < -b.radius * 2) { b.y = canvas.height + b.radius * 2; b.x = Math.random() * canvas.width; }
+    
     const color = colors[i % colors.length];
     ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
     const g = ctx.createRadialGradient(b.x - b.radius * 0.35, b.y - b.radius * 0.35, 0, b.x, b.y, b.radius);
@@ -120,15 +176,29 @@ function drawBubbles(ctx, canvas, bubbles, theme) {
   });
 }
 
-function drawFireflies(ctx, canvas, fireflies, theme) {
+function drawFireflies(ctx, canvas, fireflies, theme, mouse) {
   const isDark = theme === 'dark';
   const color = isDark ? '200, 255, 100' : '150, 220, 50';
   fireflies.forEach(f => {
-    f.x += Math.sin(f.angle) * f.speed; f.y += Math.cos(f.angle) * f.speed * 0.5;
-    f.angle += (Math.random() - 0.5) * 0.15; f.glow += f.glowSpeed;
+    // 鼠标交互 - 萤火虫被鼠标吸引
+    const dx = mouse.x - f.x;
+    const dy = mouse.y - f.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 200 && dist > 30) {
+      f.vx += dx * 0.0002;
+      f.vy += dy * 0.0002;
+    }
+    
+    f.x += Math.sin(f.angle) * f.speed + (f.vx || 0); 
+    f.y += Math.cos(f.angle) * f.speed * 0.5 + (f.vy || 0);
+    f.angle += (Math.random() - 0.5) * 0.15; 
+    f.glow += f.glowSpeed;
+    f.vx *= 0.98; f.vy *= 0.98;
+    
     const opacity = 0.4 + Math.sin(f.glow) * 0.5;
     if (f.x < -30) f.x = canvas.width + 30; if (f.x > canvas.width + 30) f.x = -30;
     if (f.y < -30) f.y = canvas.height + 30; if (f.y > canvas.height + 30) f.y = -30;
+    
     const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.radius * 8);
     g.addColorStop(0, `rgba(${color}, ${opacity})`);
     g.addColorStop(0.2, `rgba(${color}, ${opacity * 0.5})`);
@@ -140,10 +210,19 @@ function drawFireflies(ctx, canvas, fireflies, theme) {
   });
 }
 
-function drawMeteors(ctx, canvas, meteors, theme) {
+function drawMeteors(ctx, canvas, meteors, theme, mouse) {
   const isDark = theme === 'dark';
   const color = isDark ? '200, 220, 255' : '100, 150, 255';
   meteors.forEach(m => {
+    // 鼠标交互 - 流星被鼠标吸引
+    const dx = mouse.x - m.x;
+    const dy = mouse.y - m.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 150) {
+      m.vx += dx * 0.001;
+      m.vy += dy * 0.001;
+    }
+    
     m.x += m.vx; m.y += m.vy; m.life -= 0.006;
     if (m.life <= 0) {
       m.x = Math.random() * canvas.width * 1.5; m.y = -30;
@@ -165,18 +244,23 @@ function drawMeteors(ctx, canvas, meteors, theme) {
   });
 }
 
-function drawAurora(ctx, canvas, time, theme) {
+function drawAurora(ctx, canvas, time, theme, mouse) {
   const isDark = theme === 'dark';
   const colors = isDark
     ? ['rgba(0, 255, 150, 0.25)', 'rgba(0, 200, 255, 0.2)', 'rgba(180, 0, 255, 0.18)', 'rgba(0, 150, 255, 0.15)']
     : ['rgba(0, 180, 100, 0.15)', 'rgba(0, 150, 200, 0.12)', 'rgba(100, 0, 180, 0.1)', 'rgba(0, 120, 180, 0.08)'];
+  
+  // 鼠标影响极光波动
+  const mouseOffsetX = (mouse.x / canvas.width - 0.5) * 100;
+  const mouseOffsetY = (mouse.y / canvas.height - 0.5) * 50;
+  
   for (let i = 0; i < 4; i++) {
     ctx.beginPath(); ctx.moveTo(0, canvas.height);
     for (let x = 0; x <= canvas.width; x += 6) {
-      const y = canvas.height * (0.25 + i * 0.08) +
-        Math.sin(x * 0.002 + time * (0.3 + i * 0.15) + i * 1.2) * (60 + i * 20) +
-        Math.sin(x * 0.005 + time * (0.2 + i * 0.1)) * 30 +
-        Math.cos(x * 0.001 + time * 0.15 + i * 0.8) * 40;
+      const y = canvas.height * (0.25 + i * 0.08) + mouseOffsetY +
+        Math.sin((x + mouseOffsetX) * 0.002 + time * (0.3 + i * 0.15) + i * 1.2) * (60 + i * 20) +
+        Math.sin((x + mouseOffsetX) * 0.005 + time * (0.2 + i * 0.1)) * 30 +
+        Math.cos((x + mouseOffsetX) * 0.001 + time * 0.15 + i * 0.8) * 40;
       ctx.lineTo(x, y);
     }
     ctx.lineTo(canvas.width, canvas.height); ctx.closePath();
@@ -189,13 +273,14 @@ function drawAurora(ctx, canvas, time, theme) {
 function ThreeScene({ effect, theme }) {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
+  const mouseRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!mountRef.current || sceneRef.current) return;
     sceneRef.current = true;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -206,33 +291,42 @@ function ThreeScene({ effect, theme }) {
     let objects = [];
     let time = 0;
 
+    // 鼠标跟踪
+    const handleMouseMove = (e) => {
+      mouseRef.current = {
+        x: (e.clientX / window.innerWidth) * 2 - 1,
+        y: -(e.clientY / window.innerHeight) * 2 + 1
+      };
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
     if (effect === 'lightweb') {
-      // 光网 - 全屏六边形网格
-      const cols = Math.ceil(window.innerWidth / 80) + 2;
-      const rows = Math.ceil(window.innerHeight / 80) + 2;
-      const spacingX = window.innerWidth / (cols - 1);
-      const spacingY = window.innerHeight / (rows - 1);
+      // 光网 - 全屏六边形网格，更大范围
+      const cols = Math.ceil(window.innerWidth / 60) + 4;
+      const rows = Math.ceil(window.innerHeight / 60) + 4;
+      const spacingX = window.innerWidth / (cols - 3);
+      const spacingY = window.innerHeight / (rows - 3);
       const nodes = [];
 
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-          const x = (i - cols / 2) * spacingX;
-          const y = (j - rows / 2) * spacingY;
-          nodes.push({ x, y, index: i * rows + j });
+      for (let i = -1; i < cols + 1; i++) {
+        for (let j = -1; j < rows + 1; j++) {
+          const x = (i - cols / 2) * spacingX * 0.8;
+          const y = (j - rows / 2) * spacingY * 0.8;
+          nodes.push({ x, y, index: i * rows + j, originalX: x, originalY: y });
         }
       }
 
-      const nodeGeo = new THREE.SphereGeometry(0.12, 12, 12);
+      const nodeGeo = new THREE.SphereGeometry(0.15, 12, 12);
       const nodeMat = new THREE.MeshBasicMaterial({ color: isDark ? 0x00ffff : 0x0088ff, transparent: true, opacity: 0.9 });
       nodes.forEach(node => {
         const mesh = new THREE.Mesh(nodeGeo, nodeMat.clone());
-        mesh.position.set(node.x, node.y, -5 + Math.sin(node.x * 0.3 + node.y * 0.3) * 1.5);
-        mesh.userData = { baseZ: mesh.position.z, phase: Math.random() * Math.PI * 2 };
+        mesh.position.set(node.x, node.y, -8 + Math.sin(node.x * 0.2 + node.y * 0.2) * 3);
+        mesh.userData = { baseZ: mesh.position.z, phase: Math.random() * Math.PI * 2, originalX: node.x, originalY: node.y };
         scene.add(mesh);
         objects.push(mesh);
       });
 
-      const lineMat = new THREE.LineBasicMaterial({ color: isDark ? 0x00ffff : 0x0088ff, transparent: true, opacity: 0.2 });
+      const lineMat = new THREE.LineBasicMaterial({ color: isDark ? 0x00ffff : 0x0088ff, transparent: true, opacity: 0.25 });
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
           const idx = i * rows + j;
@@ -251,22 +345,23 @@ function ThreeScene({ effect, theme }) {
           });
         }
       }
-      camera.position.z = 15;
+      camera.position.z = 20;
 
     } else if (effect === 'vortex') {
-      // 漩涡 - 全屏螺旋粒子
-      const count = 6000;
+      // 漩涡 - 全屏螺旋粒子，更大范围
+      const count = 8000;
       const positions = new Float32Array(count * 3);
       const colors = new Float32Array(count * 3);
       const aspect = window.innerWidth / window.innerHeight;
+      const maxRadius = Math.max(15, 12 * aspect);
 
       for (let i = 0; i < count; i++) {
         const t = i / count;
-        const angle = t * Math.PI * 24;
-        const radius = t * 12 * (aspect > 1 ? 1 : aspect);
-        const height = (t - 0.5) * 8;
+        const angle = t * Math.PI * 30;
+        const radius = t * maxRadius;
+        const height = (t - 0.5) * 12;
         positions[i * 3] = Math.cos(angle) * radius;
-        positions[i * 3 + 1] = height + Math.sin(angle * 3) * 0.4;
+        positions[i * 3 + 1] = height + Math.sin(angle * 3) * 0.5;
         positions[i * 3 + 2] = Math.sin(angle) * radius;
         const color = new THREE.Color().setHSL(t * 0.6 + 0.45, 1, isDark ? 0.6 : 0.5);
         colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
@@ -275,40 +370,41 @@ function ThreeScene({ effect, theme }) {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      const mat = new THREE.PointsMaterial({ size: 0.06, vertexColors: true, transparent: true, opacity: 0.9, sizeAttenuation: true });
+      const mat = new THREE.PointsMaterial({ size: 0.05, vertexColors: true, transparent: true, opacity: 0.9, sizeAttenuation: true });
       const points = new THREE.Points(geo, mat);
       scene.add(points);
       objects.push(points);
 
-      const coreGeo = new THREE.SphereGeometry(1, 32, 32);
+      const coreGeo = new THREE.SphereGeometry(1.2, 32, 32);
       const coreMat = new THREE.MeshBasicMaterial({ color: isDark ? 0x00ffff : 0x0088ff, transparent: true, opacity: 0.5 });
       scene.add(new THREE.Mesh(coreGeo, coreMat));
-      const glowGeo = new THREE.SphereGeometry(2, 32, 32);
+      const glowGeo = new THREE.SphereGeometry(2.5, 32, 32);
       const glowMat = new THREE.MeshBasicMaterial({ color: isDark ? 0xff00ff : 0xcc00cc, transparent: true, opacity: 0.15 });
       scene.add(new THREE.Mesh(glowGeo, glowMat));
 
-      camera.position.set(0, 3, 14);
+      camera.position.set(0, 4, 18);
       camera.lookAt(0, 0, 0);
 
     } else if (effect === 'firewave') {
       // 焰浪 - 全屏粒子火焰波浪
-      const count = 4000;
+      const count = 5000;
       const positions = new Float32Array(count * 3);
       const colors = new Float32Array(count * 3);
       const aspect = window.innerWidth / window.innerHeight;
+      const spreadX = Math.max(25, 20 * aspect);
 
       for (let i = 0; i < count; i++) {
-        const x = (Math.random() - 0.5) * 20 * (aspect > 1 ? 1 : aspect);
-        const z = (Math.random() - 0.5) * 12;
-        const y = -6 + Math.random() * 2;
+        const x = (Math.random() - 0.5) * spreadX;
+        const z = (Math.random() - 0.5) * 15;
+        const y = -8 + Math.random() * 3;
         positions[i * 3] = x; positions[i * 3 + 1] = y; positions[i * 3 + 2] = z;
 
         const t = Math.random();
         const color = new THREE.Color();
-        if (t < 0.3) color.setHSL(0.08, 1, 0.6); // 橙色
-        else if (t < 0.6) color.setHSL(0.04, 1, 0.5); // 红色
-        else if (t < 0.85) color.setHSL(0.12, 1, 0.7); // 黄色
-        else color.setHSL(0.6, 0.8, 0.7); // 蓝色点缀
+        if (t < 0.3) color.setHSL(0.08, 1, 0.6);
+        else if (t < 0.6) color.setHSL(0.04, 1, 0.5);
+        else if (t < 0.85) color.setHSL(0.12, 1, 0.7);
+        else color.setHSL(0.6, 0.8, 0.7);
         colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
       }
 
@@ -320,59 +416,56 @@ function ThreeScene({ effect, theme }) {
       scene.add(points);
       objects.push(points);
 
-      camera.position.set(0, 2, 10);
+      camera.position.set(0, 3, 12);
       camera.lookAt(0, 0, 0);
 
     } else if (effect === 'rain') {
       // 矩阵雨 - 全屏数字雨
-      const columns = 60;
-      const rows = 40;
+      const columns = 80;
+      const rows = 50;
       const count = columns * rows;
       const positions = new Float32Array(count * 3);
       const colors = new Float32Array(count * 3);
       const aspect = window.innerWidth / window.innerHeight;
+      const spreadX = Math.max(20, 16 * aspect);
 
       for (let i = 0; i < count; i++) {
         const col = i % columns;
         const row = Math.floor(i / columns);
-        const x = (col / columns - 0.5) * 16 * (aspect > 1 ? 1 : aspect);
-        const y = (row / rows - 0.5) * 12;
-        const z = -2 + Math.random() * 2;
+        const x = (col / columns - 0.5) * spreadX;
+        const y = (row / rows - 0.5) * 15;
+        const z = -3 + Math.random() * 3;
         positions[i * 3] = x; positions[i * 3 + 1] = y; positions[i * 3 + 2] = z;
 
         const brightness = Math.random();
         const color = new THREE.Color();
-        if (isDark) {
-          color.setHSL(0.35, 1, brightness * 0.6);
-        } else {
-          color.setHSL(0.35, 0.8, brightness * 0.4);
-        }
+        if (isDark) color.setHSL(0.35, 1, brightness * 0.6);
+        else color.setHSL(0.35, 0.8, brightness * 0.4);
         colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
       }
 
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      const mat = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, transparent: true, opacity: 0.8, sizeAttenuation: true });
+      const mat = new THREE.PointsMaterial({ size: 0.12, vertexColors: true, transparent: true, opacity: 0.8, sizeAttenuation: true });
       const points = new THREE.Points(geo, mat);
       scene.add(points);
       objects.push(points);
 
-      camera.position.set(0, 0, 10);
+      camera.position.set(0, 0, 12);
 
     } else if (effect === 'dna') {
       // DNA双螺旋 - 全屏
-      const count = 2000;
+      const count = 2500;
       const positions = new Float32Array(count * 3);
       const colors = new Float32Array(count * 3);
       const aspect = window.innerWidth / window.innerHeight;
+      const radius = Math.max(4, 3 * aspect);
 
       for (let i = 0; i < count; i++) {
-        const t = (i / count) * Math.PI * 12;
-        const y = (i / count - 0.5) * 16;
-        const radius = 3 * (aspect > 1 ? 1 : aspect);
+        const t = (i / count) * Math.PI * 15;
+        const y = (i / count - 0.5) * 20;
         const strand = i % 2;
-
         const offset = strand * Math.PI;
         const x = Math.cos(t + offset) * radius;
         const z = Math.sin(t + offset) * radius;
@@ -380,19 +473,14 @@ function ThreeScene({ effect, theme }) {
         positions[i * 3] = x; positions[i * 3 + 1] = y; positions[i * 3 + 2] = z;
 
         const color = new THREE.Color();
-        if (strand === 0) {
-          color.setHSL(0.55, 1, isDark ? 0.6 : 0.5); // 青色
-        } else {
-          color.setHSL(0.8, 1, isDark ? 0.6 : 0.5); // 紫色
-        }
+        if (strand === 0) color.setHSL(0.55, 1, isDark ? 0.6 : 0.5);
+        else color.setHSL(0.8, 1, isDark ? 0.6 : 0.5);
         colors[i * 3] = color.r; colors[i * 3 + 1] = color.g; colors[i * 3 + 2] = color.b;
       }
 
-      // 横梁连接
-      for (let i = 0; i < 100; i++) {
-        const t = (i / 100) * Math.PI * 12;
-        const y = (i / 100 - 0.5) * 16;
-        const radius = 3 * (aspect > 1 ? 1 : aspect);
+      for (let i = 0; i < 120; i++) {
+        const t = (i / 120) * Math.PI * 15;
+        const y = (i / 120 - 0.5) * 20;
         const x1 = Math.cos(t) * radius, z1 = Math.sin(t) * radius;
         const x2 = Math.cos(t + Math.PI) * radius, z2 = Math.sin(t + Math.PI) * radius;
 
@@ -412,7 +500,7 @@ function ThreeScene({ effect, theme }) {
       scene.add(points);
       objects.push(points);
 
-      camera.position.set(0, 0, 12);
+      camera.position.set(0, 0, 15);
     }
 
     const handleResize = () => {
@@ -426,14 +514,26 @@ function ThreeScene({ effect, theme }) {
     const animate = () => {
       animId = requestAnimationFrame(animate);
       time += 0.016;
+      
+      const mouse = mouseRef.current;
 
       if (effect === 'lightweb') {
         const nodes = objects.filter(o => o.type === 'Mesh');
         const lines = objects.filter(o => o.type === 'Line');
+        
         nodes.forEach(node => {
+          // 鼠标交互 - 节点被鼠标吸引
+          const dx = mouse.x * 20 - node.userData.originalX;
+          const dy = mouse.y * 15 - node.userData.originalY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const pull = Math.max(0, 1 - dist / 10) * 2;
+          
+          node.position.x = node.userData.originalX + dx * pull * 0.1;
+          node.position.y = node.userData.originalY + dy * pull * 0.1;
           node.position.z = node.userData.baseZ + Math.sin(time * 2 + node.userData.phase) * 0.5;
           node.material.opacity = 0.6 + Math.sin(time * 3 + node.userData.phase) * 0.3;
         });
+        
         lines.forEach(line => {
           const from = nodes[line.userData.from];
           const to = nodes[line.userData.to];
@@ -448,7 +548,13 @@ function ThreeScene({ effect, theme }) {
 
       } else if (effect === 'vortex') {
         objects.forEach(obj => {
-          if (obj.type === 'Points') { obj.rotation.y += 0.004; obj.rotation.z = Math.sin(time * 0.3) * 0.05; }
+          if (obj.type === 'Points') { 
+            obj.rotation.y += 0.004; 
+            obj.rotation.z = Math.sin(time * 0.3) * 0.05;
+            // 鼠标交互 - 漩涡倾斜
+            obj.rotation.x = mouse.y * 0.3;
+            obj.rotation.z += mouse.x * 0.2;
+          }
           else { obj.rotation.y += 0.008; }
         });
 
@@ -457,8 +563,15 @@ function ThreeScene({ effect, theme }) {
           if (obj.type === 'Points') {
             const pos = obj.geometry.attributes.position.array;
             for (let i = 0; i < pos.length; i += 3) {
-              pos[i + 1] += 0.03 + Math.sin(time * 3 + pos[i] * 0.5) * 0.02;
-              if (pos[i + 1] > 6) pos[i + 1] = -6;
+              // 鼠标交互 - 火焰被鼠标吹散
+              const dx = pos[i] - mouse.x * 15;
+              const dz = pos[i + 2] - mouse.y * 10;
+              const dist = Math.sqrt(dx * dx + dz * dz);
+              const push = Math.max(0, 1 - dist / 5) * 0.5;
+              
+              pos[i + 1] += 0.03 + Math.sin(time * 3 + pos[i] * 0.5) * 0.02 + push;
+              pos[i] += dx * push * 0.1;
+              if (pos[i + 1] > 8) pos[i + 1] = -8;
             }
             obj.geometry.attributes.position.needsUpdate = true;
           }
@@ -468,10 +581,17 @@ function ThreeScene({ effect, theme }) {
         objects.forEach(obj => {
           if (obj.type === 'Points') {
             const pos = obj.geometry.attributes.position.array;
-            const cols = 60, rows = 40;
+            const cols = 80, rows = 50;
             for (let i = 0; i < cols * rows; i++) {
+              // 鼠标交互 - 雨被鼠标推开
+              const dx = pos[i * 3] - mouse.x * 15;
+              const dz = pos[i * 3 + 2] - mouse.y * 10;
+              const dist = Math.sqrt(dx * dx + dz * dz);
+              const push = Math.max(0, 1 - dist / 3) * 0.3;
+              
               pos[i * 3 + 1] -= 0.05 + Math.random() * 0.02;
-              if (pos[i * 3 + 1] < -6) pos[i * 3 + 1] = 6;
+              pos[i * 3] += dx * push * 0.5;
+              if (pos[i * 3 + 1] < -8) pos[i * 3 + 1] = 8;
             }
             obj.geometry.attributes.position.needsUpdate = true;
           }
@@ -479,8 +599,17 @@ function ThreeScene({ effect, theme }) {
 
       } else if (effect === 'dna') {
         objects.forEach(obj => {
-          if (obj.type === 'Points') { obj.rotation.y += 0.005; }
-          else if (obj.type === 'Line') { obj.rotation.y += 0.005; }
+          if (obj.type === 'Points') { 
+            obj.rotation.y += 0.005;
+            // 鼠标交互 - DNA跟随鼠标旋转
+            obj.rotation.y += mouse.x * 0.02;
+            obj.rotation.x = mouse.y * 0.3;
+          }
+          else if (obj.type === 'Line') { 
+            obj.rotation.y += 0.005;
+            obj.rotation.y += mouse.x * 0.02;
+            obj.rotation.x = mouse.y * 0.3;
+          }
         });
       }
 
@@ -490,6 +619,7 @@ function ThreeScene({ effect, theme }) {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
       cancelAnimationFrame(animId);
       renderer.dispose();
       if (mountRef.current) mountRef.current.removeChild(renderer.domElement);
@@ -508,6 +638,7 @@ export default function AnimatedBackground({ enabled, theme, effect = 'particles
   const canvasRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
   const itemsRef = useRef([]);
+  const mouseRef = useRef({ x: 0, y: 0 });
   const isThreeEffect = THREE_EFFECTS.includes(effect);
 
   useEffect(() => {
@@ -519,30 +650,35 @@ export default function AnimatedBackground({ enabled, theme, effect = 'particles
     let time = 0;
 
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initItems(); };
+    
+    const handleMouseMove = (e) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     const initItems = () => {
       const items = []; const w = canvas.width, h = canvas.height;
       switch (effect) {
         case 'particles':
-          for (let i = 0; i < 45; i++) items.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4, radius: Math.random() * 2.5 + 1 });
+          for (let i = 0; i < 60; i++) items.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4, radius: Math.random() * 2.5 + 1 });
           break;
         case 'stars':
-          for (let i = 0; i < 100; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: Math.random() * 2.5 + 0.8, twinkle: Math.random() * Math.PI * 2, twinkleSpeed: 0.015 + Math.random() * 0.03 });
+          for (let i = 0; i < 120; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: Math.random() * 2.5 + 0.8, twinkle: Math.random() * Math.PI * 2, twinkleSpeed: 0.015 + Math.random() * 0.03 });
           break;
         case 'waves':
           for (let i = 0; i < 3; i++) items.push({ y: h * (0.45 + i * 0.2), amplitude: 50 + i * 20, frequency: 0.0015 + i * 0.0003, speed: 0.025 + i * 0.01, offset: i * 2.5 });
           break;
         case 'snow':
-          for (let i = 0; i < 70; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: Math.random() * 2.5 + 1.5, speed: 0.8 + Math.random() * 1.8, rotation: Math.random() * Math.PI * 2, opacity: 0.5 + Math.random() * 0.4 });
+          for (let i = 0; i < 80; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: Math.random() * 2.5 + 1.5, speed: 0.8 + Math.random() * 1.8, rotation: Math.random() * Math.PI * 2, opacity: 0.5 + Math.random() * 0.4, vx: 0, vy: 0 });
           break;
         case 'bubbles':
-          for (let i = 0; i < 35; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: 10 + Math.random() * 25, speed: 0.4 + Math.random() * 0.8, opacity: 0.12 + Math.random() * 0.2 });
+          for (let i = 0; i < 45; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: 10 + Math.random() * 25, speed: 0.4 + Math.random() * 0.8, opacity: 0.12 + Math.random() * 0.2, vx: 0, vy: 0 });
           break;
         case 'fireflies':
-          for (let i = 0; i < 30; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: 2 + Math.random() * 2, speed: 0.25 + Math.random() * 0.4, angle: Math.random() * Math.PI * 2, glow: Math.random() * Math.PI * 2, glowSpeed: 0.025 + Math.random() * 0.03 });
+          for (let i = 0; i < 40; i++) items.push({ x: Math.random() * w, y: Math.random() * h, radius: 2 + Math.random() * 2, speed: 0.25 + Math.random() * 0.4, angle: Math.random() * Math.PI * 2, glow: Math.random() * Math.PI * 2, glowSpeed: 0.025 + Math.random() * 0.03, vx: 0, vy: 0 });
           break;
         case 'meteors':
-          for (let i = 0; i < 6; i++) items.push({ x: Math.random() * w * 1.5, y: Math.random() * h * 0.4, vx: -(4 + Math.random() * 5), vy: 4 + Math.random() * 5, life: Math.random(), length: 80 + Math.random() * 100 });
+          for (let i = 0; i < 8; i++) items.push({ x: Math.random() * w * 1.5, y: Math.random() * h * 0.4, vx: -(4 + Math.random() * 5), vy: 4 + Math.random() * 5, life: Math.random(), length: 80 + Math.random() * 100 });
           break;
         case 'aurora':
           break;
@@ -553,21 +689,22 @@ export default function AnimatedBackground({ enabled, theme, effect = 'particles
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       time += 0.016;
+      const mouse = mouseRef.current;
       switch (effect) {
-        case 'particles': drawParticles(ctx, canvas, itemsRef.current, theme); break;
-        case 'stars': drawStars(ctx, canvas, itemsRef.current, theme); break;
-        case 'waves': drawWaves(ctx, canvas, itemsRef.current, theme, time); break;
-        case 'snow': drawSnow(ctx, canvas, itemsRef.current, theme); break;
-        case 'bubbles': drawBubbles(ctx, canvas, itemsRef.current, theme); break;
-        case 'fireflies': drawFireflies(ctx, canvas, itemsRef.current, theme); break;
-        case 'meteors': drawMeteors(ctx, canvas, itemsRef.current, theme); break;
-        case 'aurora': drawAurora(ctx, canvas, time, theme); break;
+        case 'particles': drawParticles(ctx, canvas, itemsRef.current, theme, mouse); break;
+        case 'stars': drawStars(ctx, canvas, itemsRef.current, theme, mouse); break;
+        case 'waves': drawWaves(ctx, canvas, itemsRef.current, theme, time, mouse); break;
+        case 'snow': drawSnow(ctx, canvas, itemsRef.current, theme, mouse); break;
+        case 'bubbles': drawBubbles(ctx, canvas, itemsRef.current, theme, mouse); break;
+        case 'fireflies': drawFireflies(ctx, canvas, itemsRef.current, theme, mouse); break;
+        case 'meteors': drawMeteors(ctx, canvas, itemsRef.current, theme, mouse); break;
+        case 'aurora': drawAurora(ctx, canvas, time, theme, mouse); break;
       }
       animationId = requestAnimationFrame(draw);
     };
 
     resize(); window.addEventListener('resize', resize); animationId = requestAnimationFrame(draw); setIsReady(true);
-    return () => { window.removeEventListener('resize', resize); if (animationId) cancelAnimationFrame(animationId); };
+    return () => { window.removeEventListener('resize', resize); window.removeEventListener('mousemove', handleMouseMove); if (animationId) cancelAnimationFrame(animationId); };
   }, [enabled, theme, effect, isThreeEffect]);
 
   if (!enabled) return null;
