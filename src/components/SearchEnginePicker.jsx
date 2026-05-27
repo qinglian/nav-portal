@@ -6,6 +6,7 @@ const DEFAULT_ENGINES = [
   { id: 'bing', name: '必应', url: 'https://www.bing.com/search?q=', color: '#008373' },
   { id: 'google', name: '谷歌', url: 'https://www.google.com/search?q=', color: '#4285f4' },
   { id: 'baidu', name: '百度', url: 'https://www.baidu.com/s?wd=', color: '#2932e1' },
+  { id: 'metaso', name: '秘塔AI', url: 'https://metaso.cn/?q=', color: '#00b4d8' },
   { id: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=', color: '#de5833' },
   { id: 'sogou', name: '搜狗', url: 'https://www.sogou.com/web?query=', color: '#fb5100' },
 ]
