@@ -34,15 +34,19 @@ function AppContent() {
   useEffect(() => {
     const html = document.documentElement
     
-    if (bgMode === 'gradient1') {
+    const gradients = {
+      'gradient1': 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+      'gradient2': 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 50%, #44318d 100%)',
+      'gradient3': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+      'gradient4': 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+    }
+    
+    if (gradients[bgMode]) {
       html.setAttribute('data-bg', 'custom')
-      html.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)'
-    } else if (bgMode === 'gradient2') {
-      html.setAttribute('data-bg', 'custom')
-      html.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 50%, #44318d 100%)'
+      html.style.background = gradients[bgMode]
     } else if (customWallpaper && bgMode === 'custom') {
       html.setAttribute('data-bg', 'custom')
-      html.style.background = `url(${customWallpaper}) center/cover no-repeat`
+      html.style.background = `url(${customWallpaper}) center/cover no-repeat fixed`
     } else if (bgMode === 'custom') {
       html.setAttribute('data-bg', 'custom')
     } else {
