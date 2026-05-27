@@ -1,13 +1,12 @@
-.actions {
-  display: flex;
-  gap: 4px;
+.container {
+  position: relative;
 }
 
-.actionBtn {
+.menuBtn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
+  gap: 5px;
+  padding: 6px 12px;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -20,18 +19,128 @@
   transition: all var(--transition-fast);
 }
 
-.actionBtn:hover {
+.menuBtn:hover {
   background: var(--glass-bg-heavy);
   color: var(--text-primary);
   border-color: var(--accent-primary);
 }
 
+.rotated {
+  transform: rotate(180deg);
+}
+
+/* 下拉菜单 */
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 200;
+  animation: menuFadeIn 0.15s ease-out;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menuTitle {
+  padding: 10px 14px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  text-align: left;
+}
+
+.menuItem:hover {
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.menuItem svg {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.menuItem:hover svg {
+  color: var(--accent-primary);
+}
+
+.menuItemText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.menuItemLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.menuItemDesc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.menuDivider {
+  height: 1px;
+  background: var(--glass-border);
+  margin: 4px 0;
+}
+
+.menuFooter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.menuFooter svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
 @media (max-width: 640px) {
-  .actionBtn span {
+  .menuBtn span {
     display: none;
   }
 
-  .actionBtn {
+  .menuBtn {
     padding: 6px;
+  }
+
+  .menu {
+    right: -10px;
+    min-width: 200px;
   }
 }

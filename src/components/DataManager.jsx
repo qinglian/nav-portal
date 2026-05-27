@@ -1,11 +1,12 @@
-import { useRef } from 'react'
-import { Download, Upload } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Download, Upload, Settings, ChevronDown, Check, AlertCircle } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import styles from './DataManager.module.css'
 
 export default function DataManager({ isEditMode }) {
   const { data, resetData } = useData()
   const fileInputRef = useRef(null)
+  const [showMenu, setShowMenu] = useState(false)
 
   // 导出配置
   const handleExport = () => {
@@ -23,11 +24,12 @@ export default function DataManager({ isEditMode }) {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `清炼导航配置_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.json`
+    link.download = `清炼导航_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.json`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
+    setShowMenu(false)
   }
 
   // 导入配置
@@ -62,6 +64,8 @@ export default function DataManager({ isEditMode }) {
           localStorage.setItem('nav-current-engine', imported.currentEngine)
         }
         
+        setShowMenu(false)
+        
         // 刷新页面应用配置
         if (confirm('配置导入成功！页面将刷新以应用新配置。')) {
           window.location.reload()
@@ -77,6 +81,20 @@ export default function DataManager({ isEditMode }) {
     e.target.value = ''
   }
 
+  // 点击外部关闭菜单
+  const handleClickOutside = (e) => {
+    if (!e.target.closest(`.${styles.container}`)) {
+      setShowMenu(false)
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('click', handleClickOutside)
+    if (showMenu) {
+      document.addEventListener('click', handleClickOutside)
+    }
+  }
+
   return (
     <>
       <input
@@ -88,23 +106,44 @@ export default function DataManager({ isEditMode }) {
       />
       
       {isEditMode && (
-        <div className={styles.actions}>
-          <button
-            className={styles.actionBtn}
-            onClick={handleExport}
-            title="导出配置"
+        <div className={styles.container}>
+          <button 
+            className={styles.menuBtn}
+            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu) }}
           >
-            <Download size={14} />
-            <span>导出</span>
+            <Settings size={14} />
+            <span>数据</span>
+            <ChevronDown size={12} className={showMenu ? styles.rotated : ''} />
           </button>
-          <button
-            className={styles.actionBtn}
-            onClick={handleImportClick}
-            title="导入配置"
-          >
-            <Upload size={14} />
-            <span>导入</span>
-          </button>
+          
+          {showMenu && (
+            <div className={styles.menu}>
+              <div className={styles.menuTitle}>数据管理</div>
+              
+              <button className={styles.menuItem} onClick={handleExport}>
+                <Download size={15} />
+                <div className={styles.menuItemText}>
+                  <span className={styles.menuItemLabel}>导出配置</span>
+                  <span className={styles.menuItemDesc}>下载当前所有数据</span>
+                </div>
+              </button>
+              
+              <button className={styles.menuItem} onClick={handleImportClick}>
+                <Upload size={15} />
+                <div className={styles.menuItemText}>
+                  <span className={styles.menuItemLabel}>导入配置</span>
+                  <span className={styles.menuItemDesc}>从文件恢复数据</span>
+                </div>
+              </button>
+              
+              <div className={styles.menuDivider} />
+              
+              <div className={styles.menuFooter}>
+                <AlertCircle size={12} />
+                <span>导入将覆盖现有数据</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>
