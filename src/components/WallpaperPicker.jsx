@@ -31,7 +31,6 @@ export default function WallpaperPicker({ currentWallpaper, onSelect, onUpload, 
 
   const handleSelect = (id) => {
     onSelect(id)
-    onClose()
   }
 
   return (

@@ -1,4 +1,4 @@
-import { Sparkles, Star, Waves, Snowflake, Circle, Bug, Zap, Mountain, Box, Orbit } from 'lucide-react';
+import { Sparkles, Star, Waves, Snowflake, Circle, Bug, Zap, Mountain, Hexagon, RotateCw } from 'lucide-react';
 import styles from './EffectPicker.module.css';
 
 const effects = [
@@ -10,8 +10,8 @@ const effects = [
   { id: 'fireflies', name: '萤火虫', icon: Bug, group: '2D' },
   { id: 'meteors', name: '流星', icon: Zap, group: '2D' },
   { id: 'aurora', name: '极光', icon: Mountain, group: '2D' },
-  { id: 'geometry', name: '几何体', icon: Box, group: '3D' },
-  { id: 'galaxy', name: '星系', icon: Orbit, group: '3D' },
+  { id: 'lightweb', name: '光网', icon: Hexagon, group: '3D' },
+  { id: 'vortex', name: '漩涡', icon: RotateCw, group: '3D' },
 ];
 
 export default function EffectPicker({ currentEffect, enabled, onToggle, onSelect, onClose }) {
