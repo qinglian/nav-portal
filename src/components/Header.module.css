@@ -152,8 +152,104 @@
     padding: 6px;
   }
 
+  .dataBtn span {
+    display: none;
+  }
+
+  .dataBtn {
+    padding: 6px;
+  }
+
   .container {
     padding: 0 12px;
     gap: 8px;
   }
+}
+
+/* 数据管理按钮 */
+.dataManager {
+  position: relative;
+}
+
+.dataBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dataBtn:hover {
+  background: var(--glass-bg-heavy);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+.rotated {
+  transform: rotate(180deg);
+}
+
+/* 数据菜单 */
+.dataMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 200;
+  animation: menuFadeIn 0.15s ease-out;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dataMenuItem {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  text-align: left;
+}
+
+.dataMenuItem:hover {
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.dataMenuLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.dataMenuDesc {
+  font-size: 11px;
+  color: var(--text-tertiary);
 }
