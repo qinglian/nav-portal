@@ -167,6 +167,8 @@ function AppContent() {
       {showEffectPicker && (
         <EffectPicker
           currentEffect={bgEffect}
+          enabled={animatedBg}
+          onToggle={toggleAnimatedBg}
           onSelect={handleSelectEffect}
           onClose={() => setShowEffectPicker(false)}
         />
