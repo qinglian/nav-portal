@@ -497,6 +497,8 @@ function ThreeScene({ effect, theme }) {
       geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
       const mat = new THREE.PointsMaterial({ size: 0.1, vertexColors: true, transparent: true, opacity: 0.9, sizeAttenuation: true });
       const points = new THREE.Points(geo, mat);
+      // 45度倾斜，填满屏幕两侧
+      points.rotation.z = Math.PI / 4;
       scene.add(points);
       objects.push(points);
 
@@ -600,15 +602,18 @@ function ThreeScene({ effect, theme }) {
       } else if (effect === 'dna') {
         objects.forEach(obj => {
           if (obj.type === 'Points') { 
+            // 保持45度倾斜 + Y轴旋转
             obj.rotation.y += 0.005;
-            // 鼠标交互 - DNA跟随鼠标旋转
             obj.rotation.y += mouse.x * 0.02;
             obj.rotation.x = mouse.y * 0.3;
+            // 保持45度Z轴倾斜
+            obj.rotation.z = Math.PI / 4 + mouse.x * 0.1;
           }
           else if (obj.type === 'Line') { 
             obj.rotation.y += 0.005;
             obj.rotation.y += mouse.x * 0.02;
             obj.rotation.x = mouse.y * 0.3;
+            obj.rotation.z = Math.PI / 4 + mouse.x * 0.1;
           }
         });
       }
