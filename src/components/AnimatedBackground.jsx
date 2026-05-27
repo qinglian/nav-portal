@@ -5,32 +5,34 @@ export default function AnimatedBackground({ enabled, theme }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
   const particlesRef = useRef([]);
+  const enabledRef = useRef(enabled);
   const themeRef = useRef(theme);
 
-  // 保持 theme 最新
+  // 保持最新值
   useEffect(() => {
+    enabledRef.current = enabled;
     themeRef.current = theme;
-  }, [theme]);
+  }, [enabled, theme]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !enabled) return;
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     
     // 初始化粒子
     const initParticles = (width, height) => {
-      const particleCount = Math.min(Math.floor((width * height) / 15000), 80);
+      const particleCount = Math.min(Math.floor((width * height) / 20000), 60);
       const particles = [];
       
       for (let i = 0; i < particleCount; i++) {
         particles.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.4,
-          vy: (Math.random() - 0.5) * 0.4,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
           radius: Math.random() * 2 + 1,
-          opacity: Math.random() * 0.4 + 0.1,
+          opacity: Math.random() * 0.3 + 0.1,
         });
       }
       return particles;
@@ -38,6 +40,12 @@ export default function AnimatedBackground({ enabled, theme }) {
 
     // 绘制函数
     const draw = () => {
+      if (!enabledRef.current) {
+        // 清空画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      
       const width = canvas.width;
       const height = canvas.height;
       const particles = particlesRef.current;
@@ -73,11 +81,11 @@ export default function AnimatedBackground({ enabled, theme }) {
           const dy = particle.y - other.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          if (distance < 120) {
+          if (distance < 100) {
             ctx.beginPath();
             ctx.moveTo(particle.x, particle.y);
             ctx.lineTo(other.x, other.y);
-            ctx.strokeStyle = `rgba(${lineColor}, ${0.08 * (1 - distance / 120)})`;
+            ctx.strokeStyle = `rgba(${lineColor}, ${0.06 * (1 - distance / 100)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -97,7 +105,7 @@ export default function AnimatedBackground({ enabled, theme }) {
     handleResize();
     window.addEventListener('resize', handleResize);
     
-    // 开始动画
+    // 开始动画循环
     animationRef.current = requestAnimationFrame(draw);
     
     return () => {
@@ -106,14 +114,13 @@ export default function AnimatedBackground({ enabled, theme }) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [enabled]);
-
-  if (!enabled) return null;
+  }, []);
 
   return (
     <canvas
       ref={canvasRef}
       className={styles.canvas}
+      style={{ opacity: enabled ? 1 : 0 }}
     />
   );
 }

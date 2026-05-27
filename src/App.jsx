@@ -32,7 +32,7 @@ function AppContent() {
 
   // Apply background mode
   useEffect(() => {
-    const html = document.documentElement
+    const body = document.body
     
     const gradients = {
       'gradient1': 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
@@ -42,16 +42,17 @@ function AppContent() {
     }
     
     if (gradients[bgMode]) {
-      html.setAttribute('data-bg', 'custom')
-      html.style.background = gradients[bgMode]
+      document.documentElement.setAttribute('data-bg', 'custom')
+      body.style.background = gradients[bgMode]
+      body.style.backgroundAttachment = 'fixed'
     } else if (customWallpaper && bgMode === 'custom') {
-      html.setAttribute('data-bg', 'custom')
-      html.style.background = `url(${customWallpaper}) center/cover no-repeat fixed`
+      document.documentElement.setAttribute('data-bg', 'custom')
+      body.style.background = `url(${customWallpaper}) center/cover no-repeat fixed`
     } else if (bgMode === 'custom') {
-      html.setAttribute('data-bg', 'custom')
+      document.documentElement.setAttribute('data-bg', 'custom')
     } else {
-      html.removeAttribute('data-bg')
-      html.style.background = ''
+      document.documentElement.removeAttribute('data-bg')
+      body.style.background = ''
     }
   }, [bgMode, customWallpaper])
 
