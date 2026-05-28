@@ -11,6 +11,7 @@ import WallpaperPicker from './components/WallpaperPicker'
 import EffectPicker from './components/EffectPicker'
 import { Plus } from 'lucide-react'
 import Pet from './components/Pet'
+import Calendar from './components/Calendar'
 import styles from './App.module.css'
 
 function AppContent() {
@@ -214,7 +215,8 @@ function AppContent() {
         </div>
       </main>
 
-      {/* 电子宠物 - 只在宽屏显示 */}
+      {/* 左侧小组件 - 只在宽屏显示 */}
+      <Calendar />
       <Pet />
 
       <footer className={styles.footer}>
