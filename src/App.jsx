@@ -10,7 +10,6 @@ import AnimatedBackground from './components/AnimatedBackground'
 import WallpaperPicker from './components/WallpaperPicker'
 import EffectPicker from './components/EffectPicker'
 import { Plus } from 'lucide-react'
-import PetSystem from './components/PetSystem'
 import styles from './App.module.css'
 
 function AppContent() {
@@ -213,9 +212,6 @@ function AppContent() {
           )}
         </div>
       </main>
-
-      {/* 桌面萌宠 - 只在宽屏显示 */}
-      <PetSystem />
 
       <footer className={styles.footer}>
         <p>© 2024 清炼导航 · QingLian</p>
