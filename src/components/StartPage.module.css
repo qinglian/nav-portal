@@ -173,7 +173,7 @@
 /* ==================== 搜索框 - Mac玻璃风格 ==================== */
 .searchWrapper {
   width: 100%;
-  max-width: 680px;
+  max-width: 740px;
   padding: 0 20px;
   animation: slideUp 0.6s ease 0.2s both;
 }
