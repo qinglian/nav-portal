@@ -189,15 +189,14 @@ export default function StartPage({ onGoToNav }) {
 
   return (
     <div className={styles.startPage}>
-      {/* 顶部工具栏 */}
+      {/* 右上角工具栏 */}
       <div className={styles.topBar}>
+        <button className={styles.themeBtn} onClick={toggleTheme} title={theme === 'dark' ? '切换亮色' : '切换暗色'}>
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
         <button className={styles.navBtn} onClick={onGoToNav}>
           <Compass size={16} />
           <span>导航</span>
-        </button>
-
-        <button className={styles.themeBtn} onClick={toggleTheme} title={theme === 'dark' ? '切换亮色' : '切换暗色'}>
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
       </div>
 
@@ -215,7 +214,7 @@ export default function StartPage({ onGoToNav }) {
             <span className={styles.timeSecond}>:{String(dateInfo.second).padStart(2, '0')}</span>
           </div>
           <div className={styles.dateInfo}>
-            <span>{dateInfo.year}年 {dateInfo.day}日</span>
+            <span>{dateInfo.month} {dateInfo.day}日, {dateInfo.year}</span>
             <span className={styles.dateDivider}>·</span>
             <span>{dateInfo.weekday}</span>
           </div>

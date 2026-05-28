@@ -19,8 +19,7 @@
 .topBar {
   position: fixed;
   top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 24px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -125,19 +124,21 @@
 
 .timeHour,
 .timeMinute {
-  font-size: 96px;
-  font-weight: 200;
+  font-size: 108px;
+  font-weight: 100;
   color: rgba(0, 0, 0, 0.82);
-  letter-spacing: -4px;
+  letter-spacing: -6px;
   font-variant-numeric: tabular-nums;
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .timeColon {
-  font-size: 80px;
-  font-weight: 200;
+  font-size: 90px;
+  font-weight: 100;
   color: rgba(0, 0, 0, 0.3);
-  margin: 0 4px;
+  margin: 0 2px;
   animation: blink 1s step-end infinite;
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
 }
 
 @keyframes blink {
@@ -146,11 +147,12 @@
 }
 
 .timeSecond {
-  font-size: 32px;
-  font-weight: 300;
-  color: rgba(0, 0, 0, 0.3);
-  margin-left: 8px;
+  font-size: 36px;
+  font-weight: 200;
+  color: rgba(0, 0, 0, 0.25);
+  margin-left: 6px;
   font-variant-numeric: tabular-nums;
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
 }
 
 .dateInfo {
@@ -158,9 +160,10 @@
   align-items: center;
   gap: 10px;
   font-size: 15px;
-  color: rgba(0, 0, 0, 0.4);
+  color: rgba(0, 0, 0, 0.35);
   font-weight: 400;
   letter-spacing: 1px;
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .dateDivider {
@@ -170,7 +173,7 @@
 /* ==================== 搜索框 - Mac玻璃风格 ==================== */
 .searchWrapper {
   width: 100%;
-  max-width: 620px;
+  max-width: 680px;
   padding: 0 20px;
   animation: slideUp 0.6s ease 0.2s both;
 }
