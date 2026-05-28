@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext'
 import { useData } from '../context/DataContext'
 import styles from './Header.module.css'
 
-export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker }) {
+export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker, onLogoClick }) {
   const { theme, toggleTheme } = useTheme()
   const { data } = useData()
   const [showDataMenu, setShowDataMenu] = useState(false)
@@ -80,7 +80,7 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
     <header className={styles.header}>
       <div className={styles.container}>
         {/* Left - Logo */}
-        <a href="/" className={styles.logo}>
+        <a href="javascript:void(0)" className={styles.logo} onClick={(e) => { e.preventDefault(); onLogoClick && onLogoClick() }}>
           <div className={styles.logoText}>
             <span className={styles.logoTitle}>清炼导航</span>
             <span className={styles.logoUrl}>QingLian</span>

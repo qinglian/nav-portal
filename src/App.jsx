@@ -9,6 +9,7 @@ import EditModal from './components/EditModal'
 import AnimatedBackground from './components/AnimatedBackground'
 import WallpaperPicker from './components/WallpaperPicker'
 import EffectPicker from './components/EffectPicker'
+import StartPage from './components/StartPage'
 import { Plus } from 'lucide-react'
 import styles from './App.module.css'
 
@@ -31,6 +32,21 @@ function AppContent() {
     categoryId: null,
     categoryTags: []
   })
+
+  // 视图切换：'start' 起始页 | 'nav' 导航页
+  const [currentView, setCurrentView] = useState(() => {
+    return localStorage.getItem('nav-current-view') || 'nav'
+  })
+
+  const switchToStart = () => {
+    setCurrentView('start')
+    localStorage.setItem('nav-current-view', 'start')
+  }
+
+  const switchToNav = () => {
+    setCurrentView('nav')
+    localStorage.setItem('nav-current-view', 'nav')
+  }
 
   // Apply background mode
   useEffect(() => {
@@ -139,6 +155,17 @@ function AppContent() {
     if (confirm('确定要删除这个分类吗？')) deleteCategory(categoryId)
   }
 
+  // 起始页
+  if (currentView === 'start') {
+    return (
+      <div className={styles.app}>
+        <AnimatedBackground enabled={animatedBg} theme={theme} effect={bgEffect} />
+        <StartPage onGoToNav={switchToNav} />
+      </div>
+    )
+  }
+
+  // 导航页
   return (
     <div className={styles.app}>
       <AnimatedBackground enabled={animatedBg} theme={theme} effect={bgEffect} />
@@ -152,6 +179,7 @@ function AppContent() {
         animatedBg={animatedBg}
         onToggleAnimatedBg={toggleAnimatedBg}
         onOpenEffectPicker={() => setShowEffectPicker(true)}
+        onLogoClick={switchToStart}
       />
 
       {showBgPicker && (

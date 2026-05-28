@@ -1,0 +1,621 @@
+/* ==================== 起始页容器 ==================== */
+.startPage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ==================== 顶部工具栏 ==================== */
+.topBar {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 60;
+}
+
+.navBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: none;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #555;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.25s ease;
+}
+
+.navBtn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 6px 25px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+.themeBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.25s ease;
+}
+
+.themeBtn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateY(-1px) rotate(15deg);
+}
+
+/* ==================== 中间内容 ==================== */
+.centerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+/* 问候语 */
+.greeting {
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.35);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  animation: slideDown 0.6s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==================== 时间区域 ==================== */
+.timeSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: slideDown 0.6s ease 0.1s both;
+}
+
+.time {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  line-height: 1;
+}
+
+.timeHour,
+.timeMinute {
+  font-size: 96px;
+  font-weight: 200;
+  color: rgba(0, 0, 0, 0.82);
+  letter-spacing: -4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeColon {
+  font-size: 80px;
+  font-weight: 200;
+  color: rgba(0, 0, 0, 0.3);
+  margin: 0 4px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.timeSecond {
+  font-size: 32px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.3);
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dateInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.4);
+  font-weight: 400;
+  letter-spacing: 1px;
+}
+
+.dateDivider {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+/* ==================== 搜索框 - Mac玻璃风格 ==================== */
+.searchWrapper {
+  width: 100%;
+  max-width: 620px;
+  padding: 0 20px;
+  animation: slideUp 0.6s ease 0.2s both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.searchBox {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  overflow: visible;
+  transition: all 0.3s ease;
+}
+
+.searchBox:focus-within {
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.7);
+  transform: scale(1.01);
+}
+
+/* 搜索引擎选择器 */
+.engineSelector {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 4px 0 4px;
+}
+
+.engineBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.engineBtn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.engineDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.engineName {
+  font-size: 13px;
+  color: #555;
+  font-weight: 500;
+}
+
+.chevron {
+  color: #999;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* 搜索引擎下拉 */
+.engineDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 4px;
+  min-width: 160px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 6px;
+  z-index: 100;
+  animation: dropIn 0.2s ease;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.engineOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #555;
+  transition: background 0.15s ease;
+}
+
+.engineOption:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.engineOptionActive {
+  background: rgba(102, 126, 234, 0.08);
+  color: #667eea;
+  font-weight: 600;
+}
+
+.engineCheck {
+  margin-left: auto;
+  color: #667eea;
+  font-size: 12px;
+}
+
+/* 搜索输入区域 */
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  padding: 0 16px 12px;
+  gap: 10px;
+}
+
+.searchIcon {
+  color: #999;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: #333;
+  outline: none;
+  font-weight: 400;
+}
+
+.searchInput::placeholder {
+  color: #bbb;
+  font-weight: 300;
+}
+
+.clearBtn {
+  border: none;
+  background: rgba(0, 0, 0, 0.06);
+  color: #999;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.clearBtn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #666;
+}
+
+/* ==================== 搜索建议 ==================== */
+.suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 6px;
+  z-index: 100;
+  animation: suggestIn 0.2s ease;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+@keyframes suggestIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.suggestionItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.suggestionItem:hover,
+.suggestionActive {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.suggestionIcon {
+  color: #bbb;
+  flex-shrink: 0;
+}
+
+.suggestionActive .suggestionIcon {
+  color: #667eea;
+}
+
+.suggestionText {
+  flex: 1;
+  font-size: 14px;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestionActive .suggestionText {
+  color: #333;
+  font-weight: 500;
+}
+
+.suggestionArrow {
+  color: #ccc;
+  opacity: 0;
+  transition: all 0.15s ease;
+}
+
+.suggestionItem:hover .suggestionArrow,
+.suggestionActive .suggestionArrow {
+  opacity: 1;
+  color: #667eea;
+}
+
+/* ==================== 底部提示 ==================== */
+.hint {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+  animation: slideUp 0.6s ease 0.3s both;
+}
+
+/* ==================== 暗色主题 ==================== */
+@media (prefers-color-scheme: dark) {
+  .greeting {
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .timeHour,
+  .timeMinute {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .timeColon {
+    color: rgba(255, 255, 255, 0.25);
+  }
+
+  .timeSecond {
+    color: rgba(255, 255, 255, 0.25);
+  }
+
+  .dateInfo {
+    color: rgba(255, 255, 255, 0.35);
+  }
+
+  .dateDivider {
+    color: rgba(255, 255, 255, 0.15);
+  }
+
+  .navBtn {
+    background: rgba(40, 40, 55, 0.65);
+    color: #aaa;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.2),
+      0 1px 3px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .navBtn:hover {
+    background: rgba(50, 50, 65, 0.75);
+    box-shadow:
+      0 6px 25px rgba(0, 0, 0, 0.25),
+      0 2px 6px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .themeBtn {
+    background: rgba(40, 40, 55, 0.65);
+    color: #aaa;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.2),
+      0 1px 3px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .themeBtn:hover {
+    background: rgba(50, 50, 65, 0.75);
+  }
+
+  .searchBox {
+    background: rgba(40, 40, 55, 0.55);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.2),
+      0 2px 8px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .searchBox:focus-within {
+    background: rgba(45, 45, 60, 0.65);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.25),
+      0 4px 12px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .engineBtn:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .engineName {
+    color: #bbb;
+  }
+
+  .chevron {
+    color: #666;
+  }
+
+  .engineDropdown {
+    background: rgba(35, 35, 50, 0.9);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.3),
+      0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .engineOption {
+    color: #bbb;
+  }
+
+  .engineOption:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .engineOptionActive {
+    background: rgba(102, 126, 234, 0.15);
+    color: #8b9cf7;
+  }
+
+  .engineCheck {
+    color: #8b9cf7;
+  }
+
+  .searchIcon {
+    color: #666;
+  }
+
+  .searchInput {
+    color: #eee;
+  }
+
+  .searchInput::placeholder {
+    color: #555;
+  }
+
+  .clearBtn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #666;
+  }
+
+  .clearBtn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #999;
+  }
+
+  .suggestions {
+    background: rgba(35, 35, 50, 0.9);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.3),
+      0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .suggestionItem:hover,
+  .suggestionActive {
+    background: rgba(102, 126, 234, 0.12);
+  }
+
+  .suggestionIcon {
+    color: #555;
+  }
+
+  .suggestionActive .suggestionIcon {
+    color: #8b9cf7;
+  }
+
+  .suggestionText {
+    color: #bbb;
+  }
+
+  .suggestionActive .suggestionText {
+    color: #eee;
+  }
+
+  .suggestionArrow {
+    color: #555;
+  }
+
+  .suggestionItem:hover .suggestionArrow,
+  .suggestionActive .suggestionArrow {
+    color: #8b9cf7;
+  }
+
+  .hint {
+    color: rgba(255, 255, 255, 0.15);
+  }
+}
