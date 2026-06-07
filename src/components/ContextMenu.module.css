@@ -1,13 +1,19 @@
 .contextMenu {
   position: fixed;
   z-index: 99999;
-  min-width: 160px;
-  background: var(--glass-bg-heavy);
-  backdrop-filter: var(--glass-blur-heavy);
-  -webkit-backdrop-filter: var(--glass-blur-heavy);
-  border: 1px solid var(--glass-border);
+  min-width: 180px;
+  /* 使用更高的不透明度，确保与背景有足够对比 */
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  /* 更深的边框 */
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  /* 更强的阴影，营造浮层感 */
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   padding: 6px;
   animation: contextMenuIn 0.15s ease-out;
   pointer-events: auto;
@@ -29,22 +35,58 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 9px 12px;
+  padding: 10px 14px;
   border: none;
   background: transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 13px;
-  color: var(--text-primary);
+  font-weight: 500;
+  color: #333;
   transition: all var(--transition-fast);
   text-align: left;
 }
 
 .contextMenuItem:hover {
-  background: var(--glass-bg);
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
 }
 
 .contextMenuItem svg {
-  color: var(--text-secondary);
+  color: #666;
   flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.contextMenuItem:hover svg {
+  color: #007aff;
+}
+
+/* 暗色主题 */
+@media (prefers-color-scheme: dark) {
+  .contextMenu {
+    background: rgba(40, 40, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.3),
+      0 1px 3px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .contextMenuItem {
+    color: #eee;
+  }
+
+  .contextMenuItem:hover {
+    background: rgba(120, 140, 255, 0.15);
+    color: #8b9cf7;
+  }
+
+  .contextMenuItem svg {
+    color: #999;
+  }
+
+  .contextMenuItem:hover svg {
+    color: #8b9cf7;
+  }
 }
