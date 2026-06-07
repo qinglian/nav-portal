@@ -1,15 +1,32 @@
-// 坚果云 WebDAV 客户端
-// 服务器地址: https://dav.jianguoyun.com/dav/
+// 通用 WebDAV 客户端（支持自定义服务器）
 
-const WEBDAV_HOST = 'https://dav.jianguoyun.com/dav'
 const BACKUP_DIR = '/nav-portal-backup'
 const BACKUP_FILE = 'nav-data.json'
 
+// 预设服务器
+export const WEBDAV_PRESETS = [
+  {
+    id: 'jianguoyun',
+    name: '坚果云',
+    host: 'https://dav.jianguoyun.com/dav',
+    helpUrl: 'https://www.jianguoyun.com',
+    helpText: '坚果云官网 → 账户信息 → 安全选项 → 添加应用密码'
+  },
+  {
+    id: 'custom',
+    name: '自定义 WebDAV',
+    host: '',
+    helpUrl: '',
+    helpText: '填写您的 WebDAV 服务器地址、账号和密码'
+  }
+]
+
 class WebDAVClient {
-  constructor(username, password) {
+  constructor(host, username, password) {
+    this.host = host.replace(/\/+$/, '') // 去掉末尾斜杠
     this.username = username
     this.password = password
-    this.baseUrl = WEBDAV_HOST
+    this.baseUrl = this.host
   }
 
   // 基础请求
@@ -50,7 +67,7 @@ class WebDAVClient {
   // 创建目录
   async createDirectory(path) {
     const response = await this.request('MKCOL', path)
-    return response.status === 201 || response.status === 405 // 405 表示目录已存在
+    return response.status === 201 || response.status === 405
   }
 
   // 上传文件
@@ -82,9 +99,8 @@ class WebDAVClient {
     
     if (response.status === 207) {
       const text = await response.text()
-      // 解析最后修改时间
-      const modifiedMatch = text.match(/<d:getlastmodified>([^<]+)<\/d:getlastmodified>/)
-      const sizeMatch = text.match(/<d:getcontentlength>([^<]+)<\/d:getcontentlength>/)
+      const modifiedMatch = text.match(/<d:getlastmodified>([^<]+)<\/d:getlastmodified>/) || text.match(/<getlastmodified[^>]*>([^<]+)<\/getlastmodified>/)
+      const sizeMatch = text.match(/<d:getcontentlength>([^<]+)<\/d:getcontentlength>/) || text.match(/<getcontentlength[^>]*>([^<]+)<\/getcontentlength>/)
       return {
         modified: modifiedMatch ? modifiedMatch[1] : null,
         size: sizeMatch ? parseInt(sizeMatch[1]) : 0
@@ -95,9 +111,7 @@ class WebDAVClient {
 
   // 备份数据
   async backup(data) {
-    // 确保备份目录存在
     await this.createDirectory(BACKUP_DIR)
-    
     const content = JSON.stringify(data, null, 2)
     const path = `${BACKUP_DIR}/${BACKUP_FILE}`
     const success = await this.uploadFile(path, content)
@@ -131,17 +145,18 @@ class WebDAVClient {
     try {
       const info = await this.getFileInfo(path)
       if (info) {
-        return {
-          exists: true,
-          modified: info.modified,
-          size: info.size
-        }
+        return { exists: true, modified: info.modified, size: info.size }
       }
     } catch {
       // 文件不存在
     }
     return { exists: false }
   }
+}
+
+// 创建客户端实例
+export const createClient = (config) => {
+  return new WebDAVClient(config.host, config.username, config.password)
 }
 
 // 保存/读取配置

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
-import { Download, Upload, Settings, ChevronDown, AlertCircle, Cloud, RefreshCw } from 'lucide-react'
+import { Download, Upload, Settings, ChevronDown, AlertCircle, Cloud, RefreshCw, Server } from 'lucide-react'
 import { useData } from '../context/DataContext'
-import WebDAVClient, { getWebDAVConfig, saveWebDAVConfig, clearWebDAVConfig } from '../utils/webdav'
+import { WEBDAV_PRESETS, createClient, getWebDAVConfig, saveWebDAVConfig, clearWebDAVConfig } from '../utils/webdav'
 import styles from './DataManager.module.css'
 
 export default function DataManager({ isEditMode }) {
@@ -11,9 +11,12 @@ export default function DataManager({ isEditMode }) {
   const [showCloudPanel, setShowCloudPanel] = useState(false)
 
   // 云备份状态
+  const [selectedPreset, setSelectedPreset] = useState('jianguoyun')
+  const [customHost, setCustomHost] = useState('')
   const [cloudUsername, setCloudUsername] = useState('')
   const [cloudPassword, setCloudPassword] = useState('')
   const [cloudConnected, setCloudConnected] = useState(false)
+  const [cloudConnectedHost, setCloudConnectedHost] = useState('')
   const [cloudLoading, setCloudLoading] = useState(false)
   const [cloudMsg, setCloudMsg] = useState('')
   const [cloudMsgType, setCloudMsgType] = useState('')
@@ -25,8 +28,35 @@ export default function DataManager({ isEditMode }) {
     if (config) {
       setCloudUsername(config.username)
       setCloudConnected(true)
+      setCloudConnectedHost(config.host)
+      // 匹配预设
+      const matched = WEBDAV_PRESETS.find(p => p.host === config.host)
+      if (matched) {
+        setSelectedPreset(matched.id)
+      } else {
+        setSelectedPreset('custom')
+        setCustomHost(config.host)
+      }
     }
   }, [])
+
+  const getCurrentHost = () => {
+    if (selectedPreset === 'custom') return customHost
+    const preset = WEBDAV_PRESETS.find(p => p.id === selectedPreset)
+    return preset?.host || ''
+  }
+
+  const getCurrentHelpText = () => {
+    if (selectedPreset === 'custom') return '填写您的 WebDAV 服务器地址、账号和密码'
+    const preset = WEBDAV_PRESETS.find(p => p.id === selectedPreset)
+    return preset?.helpText || ''
+  }
+
+  const getCurrentPresetName = () => {
+    if (selectedPreset === 'custom') return '自定义 WebDAV'
+    const preset = WEBDAV_PRESETS.find(p => p.id === selectedPreset)
+    return preset?.name || 'WebDAV'
+  }
 
   // 导出配置
   const handleExport = () => {
@@ -97,20 +127,22 @@ export default function DataManager({ isEditMode }) {
 
   // 云备份：连接
   const handleCloudConnect = async () => {
-    if (!cloudUsername || !cloudPassword) {
-      showCloudMsg('请填写账号和密码', 'error')
+    const host = getCurrentHost()
+    if (!host || !cloudUsername || !cloudPassword) {
+      showCloudMsg('请填写完整信息', 'error')
       return
     }
     setCloudLoading(true)
     try {
-      const client = new WebDAVClient(cloudUsername, cloudPassword)
+      const client = createClient({ host, username: cloudUsername, password: cloudPassword })
       const ok = await client.testConnection()
       if (ok) {
-        saveWebDAVConfig({ username: cloudUsername, password: cloudPassword })
+        saveWebDAVConfig({ host, username: cloudUsername, password: cloudPassword, presetId: selectedPreset })
         setCloudConnected(true)
+        setCloudConnectedHost(host)
         showCloudMsg('连接成功！')
       } else {
-        showCloudMsg('连接失败，请检查账号密码', 'error')
+        showCloudMsg('连接失败，请检查服务器地址、账号密码', 'error')
       }
     } catch (err) {
       showCloudMsg('连接失败: ' + err.message, 'error')
@@ -124,7 +156,7 @@ export default function DataManager({ isEditMode }) {
     if (!config) return
     setCloudLoading(true)
     try {
-      const client = new WebDAVClient(config.username, config.password)
+      const client = createClient(config)
       const localData = localStorage.getItem('nav-data-v2')
       if (!localData) {
         showCloudMsg('没有数据需要备份', 'error')
@@ -146,7 +178,7 @@ export default function DataManager({ isEditMode }) {
     if (!confirm('从云端恢复将覆盖当前所有数据，确定继续吗？')) return
     setCloudLoading(true)
     try {
-      const client = new WebDAVClient(config.username, config.password)
+      const client = createClient(config)
       const result = await client.restore()
       if (result.success) {
         localStorage.setItem('nav-data-v2', JSON.stringify(result.data))
@@ -247,14 +279,14 @@ export default function DataManager({ isEditMode }) {
                 className={`${styles.menuItem} ${styles.cloudItem}`}
                 onClick={(e) => { e.stopPropagation(); setShowCloudPanel(!showCloudPanel); setShowMenu(false) }}
               >
-                <Cloud size={15} className={cloudConnected ? styles.cloudConnected : ''} />
+                <Server size={15} className={cloudConnected ? styles.cloudConnected : ''} />
                 <div className={styles.menuItemText}>
                   <span className={styles.menuItemLabel}>
-                    坚果云备份
+                    WebDAV 备份
                     {cloudConnected && <span className={styles.cloudBadge}>已连接</span>}
                   </span>
                   <span className={styles.menuItemDesc}>
-                    {cloudConnected ? '点击管理云端备份' : '连接坚果云同步数据'}
+                    {cloudConnected ? '点击管理云端备份' : '连接坚果云或其他WebDAV服务'}
                   </span>
                 </div>
               </button>
@@ -272,8 +304,8 @@ export default function DataManager({ isEditMode }) {
           {showCloudPanel && (
             <div className={styles.cloudPanel}>
               <div className={styles.cloudPanelHeader}>
-                <Cloud size={16} />
-                <span>坚果云备份</span>
+                <Server size={16} />
+                <span>WebDAV 云备份</span>
               </div>
 
               {cloudMsg && (
@@ -284,43 +316,75 @@ export default function DataManager({ isEditMode }) {
 
               {!cloudConnected ? (
                 <>
+                  {/* 服务器选择 */}
                   <div className={styles.cloudInputGroup}>
-                    <label>坚果云账号</label>
+                    <label>备份服务</label>
+                    <select
+                      value={selectedPreset}
+                      onChange={(e) => setSelectedPreset(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className={styles.cloudSelect}
+                    >
+                      {WEBDAV_PRESETS.map(preset => (
+                        <option key={preset.id} value={preset.id}>{preset.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 自定义服务器地址 */}
+                  {selectedPreset === 'custom' && (
+                    <div className={styles.cloudInputGroup}>
+                      <label>服务器地址</label>
+                      <input
+                        type="text"
+                        value={customHost}
+                        onChange={(e) => setCustomHost(e.target.value)}
+                        placeholder="https://your-server.com/dav"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  )}
+
+                  <div className={styles.cloudInputGroup}>
+                    <label>账号</label>
                     <input
                       type="text"
                       value={cloudUsername}
                       onChange={(e) => setCloudUsername(e.target.value)}
-                      placeholder="邮箱或手机号"
+                      placeholder="用户名/邮箱"
                       onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                   <div className={styles.cloudInputGroup}>
-                    <label>应用密码</label>
+                    <label>密码</label>
                     <input
                       type="password"
                       value={cloudPassword}
                       onChange={(e) => setCloudPassword(e.target.value)}
-                      placeholder="安全选项中生成"
+                      placeholder="登录密码或应用密码"
                       onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                   <p className={styles.cloudHelp}>
-                    💡 坚果云官网 → 账户信息 → 安全选项 → 添加应用密码
+                    💡 {getCurrentHelpText()}
                   </p>
                   <button
                     className={styles.cloudConnectBtn}
                     onClick={(e) => { e.stopPropagation(); handleCloudConnect() }}
                     disabled={cloudLoading}
                   >
-                    {cloudLoading ? <RefreshCw size={14} className={styles.spin} /> : <Cloud size={14} />}
-                    {cloudLoading ? '连接中...' : '连接坚果云'}
+                    {cloudLoading ? <RefreshCw size={14} className={styles.spin} /> : <Server size={14} />}
+                    {cloudLoading ? '连接中...' : '连接服务器'}
                   </button>
                 </>
               ) : (
                 <>
                   <div className={styles.cloudStatus}>
                     <span className={styles.cloudStatusDot} />
-                    已连接: {cloudUsername}
+                    <div>
+                      <div>已连接: {cloudUsername}</div>
+                      <div className={styles.cloudStatusHost}>{cloudConnectedHost}</div>
+                    </div>
                   </div>
 
                   <div className={styles.cloudActions}>
