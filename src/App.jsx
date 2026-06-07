@@ -10,7 +10,9 @@ import AnimatedBackground from './components/AnimatedBackground'
 import WallpaperPicker from './components/WallpaperPicker'
 import EffectPicker from './components/EffectPicker'
 import StartPage from './components/StartPage'
-import { Plus } from 'lucide-react'
+import ContextMenu from './components/ContextMenu'
+import QRCode from 'qrcode'
+import { Plus, X } from 'lucide-react'
 import styles from './App.module.css'
 
 function AppContent() {
@@ -37,6 +39,11 @@ function AppContent() {
   const [currentView, setCurrentView] = useState(() => {
     return localStorage.getItem('nav-current-view') || 'nav'
   })
+
+  // 全局右键菜单状态
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, site: null })
+  // 全局二维码弹窗状态
+  const [qrModal, setQrModal] = useState({ visible: false, site: null, dataUrl: '' })
 
   const switchToStart = () => {
     setCurrentView('start')
@@ -242,6 +249,9 @@ function AppContent() {
               onReorderCategories={reorderCategories}
               categoryIndex={index}
               allCategories={filteredCategories}
+              onSiteContextMenu={(e, site) => {
+                setContextMenu({ visible: true, x: e.clientX, y: e.clientY, site })
+              }}
             />
           ))}
 
@@ -268,6 +278,49 @@ function AppContent() {
         categoryTags={modalState.categoryTags}
         onSave={handleModalSave}
       />
+
+      {/* 全局右键菜单 */}
+      <ContextMenu
+        visible={contextMenu.visible}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        site={contextMenu.site}
+        onAction={async (action) => {
+          if (action === 'qr' && contextMenu.site) {
+            try {
+              const dataUrl = await QRCode.toDataURL(contextMenu.site.url, {
+                width: 240, margin: 2, color: { dark: '#333', light: '#fff' }
+              })
+              setQrModal({ visible: true, site: contextMenu.site, dataUrl })
+            } catch (err) {
+              console.error('QR生成失败:', err)
+            }
+          }
+          setContextMenu({ ...contextMenu, visible: false })
+        }}
+        onClose={() => setContextMenu({ ...contextMenu, visible: false })}
+      />
+
+      {/* 全局二维码弹窗 */}
+      {qrModal.visible && (
+        <div className={styles.qrModalOverlay} onClick={() => setQrModal({ ...qrModal, visible: false })}>
+          <div className={styles.qrModal} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.qrModalClose} onClick={() => setQrModal({ ...qrModal, visible: false })}>
+              <X size={18} />
+            </button>
+            <h3 className={styles.qrModalTitle}>{qrModal.site?.name}</h3>
+            <p className={styles.qrModalUrl}>{qrModal.site?.url}</p>
+            <div className={styles.qrCodeWrapper}>
+              {qrModal.dataUrl ? (
+                <img src={qrModal.dataUrl} alt="二维码" className={styles.qrCodeImage} />
+              ) : (
+                <div className={styles.qrCodeLoading}>生成中...</div>
+              )}
+            </div>
+            <p className={styles.qrModalHint}>手机扫码即可访问</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

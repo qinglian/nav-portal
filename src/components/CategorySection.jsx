@@ -15,7 +15,8 @@ export default function CategorySection({
   onReorderTags,
   onReorderCategories,
   categoryIndex,
-  allCategories
+  allCategories,
+  onSiteContextMenu
 }) {
   const [activeTag, setActiveTag] = useState('全部')
   const tagContainerRef = useRef(null)
@@ -253,6 +254,7 @@ export default function CategorySection({
                 isEditMode={isEditMode}
                 onEdit={() => onEditSite(category.id, site)}
                 onDelete={() => onDeleteSite(category.id, site.id)}
+                onContextMenu={onSiteContextMenu}
               />
             </div>
           ))}

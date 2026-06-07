@@ -1,0 +1,50 @@
+.contextMenu {
+  position: fixed;
+  z-index: 99999;
+  min-width: 160px;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  animation: contextMenuIn 0.15s ease-out;
+  pointer-events: auto;
+}
+
+@keyframes contextMenuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.contextMenuItem:hover {
+  background: var(--glass-bg);
+}
+
+.contextMenuItem svg {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
