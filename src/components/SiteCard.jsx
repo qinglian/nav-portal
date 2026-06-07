@@ -57,6 +57,7 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
 
       <div className={styles.content}>
         <h3 className={styles.name}>{site.name}</h3>
+        {site.description && <p className={styles.description}>{site.description}</p>}
       </div>
 
       {isEditMode && (
