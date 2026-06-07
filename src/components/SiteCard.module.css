@@ -156,6 +156,62 @@
   background: #ff3b30;
 }
 
+/* ==================== 网站状态指示器 ==================== */
+.statusIndicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  animation: statusFadeIn 0.3s ease;
+}
+
+@keyframes statusFadeIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.statusOnline {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.statusOffline {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  animation: statusFadeIn 0.3s ease, pulseRed 2s ease-in-out infinite;
+}
+
+@keyframes pulseRed {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* 离线状态卡片样式 */
+.cardOffline {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.cardOffline:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.iconWrapperOffline {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+}
+
+.nameOffline {
+  color: #ef4444;
+}
+
 @media (max-width: 640px) {
   .card {
     padding: 6px 10px;

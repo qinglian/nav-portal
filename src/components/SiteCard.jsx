@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { Edit2, Trash2, GripVertical } from 'lucide-react'
+import { Edit2, Trash2, GripVertical, Wifi, WifiOff } from 'lucide-react'
+import { checkSiteStatus } from '../utils/siteStatus'
 import styles from './SiteCard.module.css'
 
 function getFaviconUrl(url) {
@@ -22,9 +23,25 @@ function generateColor(url) {
 
 export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandleProps, onContextMenu }) {
   const [iconError, setIconError] = useState(false)
+  const [siteStatus, setSiteStatus] = useState(null) // null = 检测中, true = 在线, false = 离线
+  const [showStatus, setShowStatus] = useState(false)
   const cardRef = useRef(null)
   const faviconUrl = getFaviconUrl(site.url)
   const fallbackColor = generateColor(site.url)
+
+  // 检测网站状态
+  useEffect(() => {
+    let mounted = true
+    const detect = async () => {
+      const status = await checkSiteStatus(site.url)
+      if (mounted) {
+        setSiteStatus(status.online)
+        setShowStatus(true)
+      }
+    }
+    detect()
+    return () => { mounted = false }
+  }, [site.url])
 
   const handleClick = () => {
     if (!isEditMode) {
@@ -32,35 +49,43 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
     }
   }
 
-  // 右键事件 - 传递给父组件统一管理
+  // 右键事件
   useEffect(() => {
     const card = cardRef.current
     if (!card) return
-
     const handleContextMenu = (e) => {
       e.preventDefault()
       e.stopPropagation()
       onContextMenu && onContextMenu(e, site)
     }
-
     card.addEventListener('contextmenu', handleContextMenu)
     return () => card.removeEventListener('contextmenu', handleContextMenu)
   }, [site, onContextMenu])
 
+  const isOffline = siteStatus === false
+
   return (
     <div
       ref={cardRef}
-      className={styles.card}
+      className={`${styles.card} ${isOffline ? styles.cardOffline : ''}`}
       data-site-card="true"
       onClick={handleClick}
+      title={isOffline ? '该网站暂时无法访问' : site.url}
     >
+      {/* 状态指示器 */}
+      {showStatus && (
+        <div className={`${styles.statusIndicator} ${isOffline ? styles.statusOffline : styles.statusOnline}`}>
+          {isOffline ? <WifiOff size={10} /> : <Wifi size={10} />}
+        </div>
+      )}
+
       {isEditMode && (
         <div className={styles.dragHandle} {...dragHandleProps}>
           <GripVertical size={12} />
         </div>
       )}
 
-      <div className={styles.iconWrapper} style={{ background: fallbackColor }}>
+      <div className={`${styles.iconWrapper} ${isOffline ? styles.iconWrapperOffline : ''}`} style={{ background: fallbackColor }}>
         {faviconUrl && !iconError ? (
           <img
             src={faviconUrl}
@@ -77,7 +102,7 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
       </div>
 
       <div className={styles.content}>
-        <h3 className={styles.name}>{site.name}</h3>
+        <h3 className={`${styles.name} ${isOffline ? styles.nameOffline : ''}`}>{site.name}</h3>
         {site.description && <p className={styles.description}>{site.description}</p>}
       </div>
 
