@@ -21,7 +21,7 @@ function generateColor(url) {
   return `hsl(${h}, 70%, 55%)`
 }
 
-export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandleProps, onContextMenu }) {
+export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandleProps, onContextMenu, siteStatusEnabled = true }) {
   const [iconError, setIconError] = useState(false)
   const [siteStatus, setSiteStatus] = useState(null)
   const [showStatus, setShowStatus] = useState(false)
@@ -30,6 +30,7 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
   const fallbackColor = generateColor(site.url)
 
   useEffect(() => {
+    if (!siteStatusEnabled) return
     let mounted = true
     const detect = async () => {
       const status = await checkSiteStatus(site.url)
@@ -40,7 +41,7 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
     }
     detect()
     return () => { mounted = false }
-  }, [site.url])
+  }, [site.url, siteStatusEnabled])
 
   const handleClick = () => {
     if (!isEditMode) {

@@ -25,6 +25,7 @@ function AppContent() {
   const [showBgPicker, setShowBgPicker] = useState(false)
   
   const [animatedBg, setAnimatedBg] = useState(() => localStorage.getItem('nav-animated-bg') === 'true')
+  const [siteStatusEnabled, setSiteStatusEnabled] = useState(() => localStorage.getItem('nav-site-status') !== 'false')
   const [bgEffect, setBgEffect] = useState(() => localStorage.getItem('nav-bg-effect') || 'particles')
   const [showEffectPicker, setShowEffectPicker] = useState(false)
   const [modalState, setModalState] = useState({
@@ -195,6 +196,12 @@ function AppContent() {
       <Header
         onToggleEdit={() => setIsEditMode(!isEditMode)}
         isEditMode={isEditMode}
+        siteStatusEnabled={siteStatusEnabled}
+        onToggleSiteStatus={() => {
+          const newVal = !siteStatusEnabled
+          setSiteStatusEnabled(newVal)
+          localStorage.setItem('nav-site-status', newVal.toString())
+        }}
         searchQuery={searchQuery}
         onSearch={setSearchQuery}
         onToggleBgMode={toggleBgMode}
@@ -252,6 +259,7 @@ function AppContent() {
               onSiteContextMenu={(e, site) => {
                 setContextMenu({ visible: true, x: e.clientX, y: e.clientY, site })
               }}
+              siteStatusEnabled={siteStatusEnabled}
             />
           ))}
 

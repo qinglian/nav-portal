@@ -1,11 +1,12 @@
-import { Search, Moon, Sun, Image, Edit3, Check, Sparkles } from 'lucide-react'
+import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity } from 'lucide-react'
 import { useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import DataManager from './DataManager'
 import styles from './Header.module.css'
 
-export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker, onLogoClick }) {
+export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker, onLogoClick, siteStatusEnabled, onToggleSiteStatus }) {
   const { theme, toggleTheme } = useTheme()
+  const [showSiteConfig, setShowSiteConfig] = useState(false)
 
   return (
     <header className={styles.header}>
@@ -34,6 +35,40 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
         <div className={styles.actions}>
           <DataManager isEditMode={isEditMode} />
           
+          {isEditMode && (
+            <div className={styles.siteConfigWrapper}>
+              <button
+                className={styles.siteConfigBtn}
+                onClick={(e) => { e.stopPropagation(); setShowSiteConfig(!showSiteConfig) }}
+              >
+                <Settings2 size={14} />
+                <span>网站配置</span>
+              </button>
+              
+              {showSiteConfig && (
+                <div className={styles.siteConfigMenu}>
+                  <div className={styles.configTitle}>网站配置</div>
+                  
+                  <label className={styles.configRow}>
+                    <div className={styles.configLabel}>
+                      <Activity size={14} />
+                      <div>
+                        <span className={styles.configName}>网站状态检测</span>
+                        <span className={styles.configDesc}>自动检测网站是否可访问</span>
+                      </div>
+                    </div>
+                    <button
+                      className={`${styles.configToggle} ${siteStatusEnabled ? styles.configToggleOn : ''}`}
+                      onClick={() => onToggleSiteStatus && onToggleSiteStatus()}
+                    >
+                      <span className={styles.configToggleThumb} />
+                    </button>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+
           <button 
             className={`${styles.editBtn} ${isEditMode ? styles.active : ''}`}
             onClick={onToggleEdit}

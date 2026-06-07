@@ -259,3 +259,140 @@
   font-size: 11px;
   color: var(--text-tertiary);
 }
+
+/* 网站配置按钮 */
+.siteConfigWrapper {
+  position: relative;
+}
+
+.siteConfigBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.siteConfigBtn:hover {
+  background: var(--glass-bg-heavy);
+  color: var(--text-primary);
+}
+
+/* 网站配置下拉菜单 */
+.siteConfigMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 240px;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 12px;
+  z-index: 200;
+  animation: menuFadeIn 0.15s ease-out;
+}
+
+.configTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 8px;
+}
+
+.configRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.configLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.configLabel svg {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.configName {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.configDesc {
+  display: block;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.configToggle {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--glass-border);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.configToggleOn {
+  background: #667eea;
+}
+
+.configToggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.configToggleOn .configToggleThumb {
+  transform: translateX(16px);
+}
+
+@media (max-width: 640px) {
+  .siteConfigBtn span {
+    display: none;
+  }
+
+  .siteConfigBtn {
+    padding: 6px;
+  }
+
+  .siteConfigMenu {
+    right: -40px;
+    min-width: 220px;
+  }
+}
