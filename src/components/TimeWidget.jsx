@@ -1,75 +1,24 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Calendar, MapPin } from 'lucide-react'
-import { fetchWeather, getSavedCity, getLocation, reverseGeocode, saveCity, getWeatherEnabled } from '../utils/weather'
+import { fetchWeather, getSavedCity, getLocation, saveCity, getWeatherEnabled } from '../utils/weather'
 import styles from './TimeWidget.module.css'
 
-// ==================== 翻页数字组件 ====================
-function FlipDigit({ value, label }) {
-  const [prevValue, setPrevValue] = useState(value)
-  const [isFlipping, setIsFlipping] = useState(false)
-  const prevRef = useRef(value)
-
-  useEffect(() => {
-    if (value !== prevRef.current) {
-      setPrevValue(prevRef.current)
-      setIsFlipping(true)
-      prevRef.current = value
-      const timer = setTimeout(() => setIsFlipping(false), 600)
-      return () => clearTimeout(timer)
-    }
-  }, [value])
-
-  const displayValue = String(value).padStart(2, '0')
-  const displayPrev = String(prevValue).padStart(2, '0')
+// ==================== 数字时钟 ====================
+function DigitalClock({ date }) {
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
 
   return (
-    <div className={styles.flipUnit}>
-      <div className={styles.flipCard}>
-        {/* 静态背景层（不翻转时显示） */}
-        {!isFlipping && (
-          <div className={styles.flipStatic}>
-            <span>{displayValue}</span>
-          </div>
-        )}
-        {/* 翻转动画层 */}
-        {isFlipping && (
-          <>
-            {/* 上半部分 - 当前值（向下翻转消失） */}
-            <div className={`${styles.flipFace} ${styles.flipTop} ${styles.flipTopAnimate}`}>
-              <span>{displayValue}</span>
-            </div>
-            {/* 上半部分 - 旧值（从上方翻入） */}
-            <div className={`${styles.flipFace} ${styles.flipTopBack} ${styles.flipTopBackAnimate}`}>
-              <span>{displayPrev}</span>
-            </div>
-            {/* 下半部分 - 当前值（向下翻转消失） */}
-            <div className={`${styles.flipFace} ${styles.flipBottom} ${styles.flipBottomAnimate}`}>
-              <span>{displayValue}</span>
-            </div>
-            {/* 下半部分 - 旧值（从下方翻入） */}
-            <div className={`${styles.flipFace} ${styles.flipBottomBack} ${styles.flipBottomBackAnimate}`}>
-              <span>{displayPrev}</span>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ==================== 翻页时钟 ====================
-function FlipClock({ date }) {
-  const hours = date.getHours()
-  const minutes = date.getMinutes()
-  const seconds = date.getSeconds()
-
-  return (
-    <div className={styles.flipClock}>
-      <FlipDigit value={hours} />
-      <span className={styles.flipSeparator}>:</span>
-      <FlipDigit value={minutes} />
-      <span className={styles.flipSeparator}>:</span>
-      <FlipDigit value={seconds} />
+    <div className={styles.digitalClock}>
+      <span className={styles.digit}>{hours[0]}</span>
+      <span className={styles.digit}>{hours[1]}</span>
+      <span className={styles.colon}>:</span>
+      <span className={styles.digit}>{minutes[0]}</span>
+      <span className={styles.digit}>{minutes[1]}</span>
+      <span className={styles.colon}>:</span>
+      <span className={styles.digit}>{seconds[0]}</span>
+      <span className={styles.digit}>{seconds[1]}</span>
     </div>
   )
 }
@@ -503,7 +452,7 @@ export default function TimeWidget() {
 
         {/* 中间/右侧：翻页时钟 */}
         <div className={weatherEnabled ? styles.center : styles.rightTime}>
-          <FlipClock date={time} />
+          <DigitalClock date={time} />
         </div>
 
         {/* 右侧：天气（仅开启时显示） */}
