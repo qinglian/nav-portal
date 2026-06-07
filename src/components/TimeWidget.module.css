@@ -76,8 +76,8 @@
 }
 
 .greeting {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-primary);
   letter-spacing: 0.5px;
 }
@@ -86,7 +86,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
@@ -97,41 +97,60 @@
   justify-content: center;
 }
 
-/* ==================== 右侧：天气+时间 ==================== */
+.time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 26px;
+  font-weight: 200;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+}
+
+.time svg {
+  opacity: 0.5;
+}
+
+/* ==================== 右侧：天气 ==================== */
 .right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-shrink: 0;
+  min-width: 140px;
+  justify-content: flex-end;
 }
 
 /* 天气信息 */
 .weatherInfo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .weatherEmoji {
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
 }
 
 .weatherDetail {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
+  align-items: flex-end;
 }
 
 .weatherTemp {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
 .weatherText {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
@@ -139,30 +158,19 @@
   display: flex;
   align-items: center;
   gap: 3px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.weatherLoading {
   font-size: 11px;
   color: var(--text-tertiary);
 }
 
-.weatherLoading {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
 .weatherError {
-  font-size: 12px;
+  font-size: 11px;
   color: #f59e0b;
-}
-
-/* 时间 */
-.time {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 22px;
-  font-weight: 300;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 1px;
 }
 
 /* ==================== 响应式 ==================== */

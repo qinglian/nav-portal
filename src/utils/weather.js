@@ -108,9 +108,13 @@ export async function fetchWeather(lat, lon) {
   const cached = localStorage.getItem(WEATHER_CACHE_KEY)
   const cachedTime = localStorage.getItem(WEATHER_CACHE_TIME)
   if (cached && cachedTime) {
-    const parsed = JSON.parse(cached)
-    if (parsed.cacheKey === cacheKey && Date.now() - parseInt(cachedTime) < CACHE_DURATION) {
-      return parsed.data
+    try {
+      const parsed = JSON.parse(cached)
+      if (parsed.cacheKey === cacheKey && Date.now() - parseInt(cachedTime) < CACHE_DURATION) {
+        return parsed.data
+      }
+    } catch {
+      // 缓存损坏，继续获取新数据
     }
   }
 
@@ -118,6 +122,7 @@ export async function fetchWeather(lat, lon) {
     const resp = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto`
     )
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
     const data = await resp.json()
     if (data.current) {
       const c = data.current
