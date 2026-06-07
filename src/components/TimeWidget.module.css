@@ -27,6 +27,11 @@
   gap: 16px;
 }
 
+/* 无天气时的布局 */
+.contentNoWeather {
+  justify-content: space-between;
+}
+
 /* 天气动画 Canvas 层 */
 .weatherCanvas {
   position: absolute;
@@ -90,26 +95,147 @@
   color: var(--text-secondary);
 }
 
-/* ==================== 中间：时间 ==================== */
+/* ==================== 中间：翻页时钟（天气开启时居中） ==================== */
 .center {
   flex: 1;
   display: flex;
   justify-content: center;
 }
 
-.time {
+/* ==================== 右侧：翻页时钟（天气关闭时靠右） ==================== */
+.rightTime {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 26px;
-  font-weight: 200;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 2px;
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
-.time svg {
+/* ==================== 翻页时钟样式 ==================== */
+.flipClock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.flipUnit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.flipCard {
+  position: relative;
+  width: 36px;
+  height: 44px;
+  perspective: 200px;
+}
+
+.flipCard span {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  color: var(--text-primary);
+  line-height: 22px;
+}
+
+/* 上半部分 */
+.flipTop,
+.flipTopBack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background: var(--glass-bg-heavy);
+  border-radius: 4px 4px 0 0;
+  border: 1px solid var(--glass-border);
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+  backface-visibility: hidden;
+  transform-origin: bottom;
+}
+
+.flipTop span,
+.flipTopBack span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 44px;
+  line-height: 44px;
+}
+
+/* 下半部分 */
+.flipBottom,
+.flipBottomBack {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background: var(--glass-bg-heavy);
+  border-radius: 0 0 4px 4px;
+  border: 1px solid var(--glass-border);
+  border-top: none;
+  backface-visibility: hidden;
+  transform-origin: top;
+}
+
+.flipBottom span,
+.flipBottomBack span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 44px;
+  line-height: 44px;
+}
+
+/* 翻转动画 */
+.flipTopAnimate {
+  animation: flipTop 0.6s ease-in forwards;
+}
+
+.flipTopBackAnimate {
+  animation: flipTopBack 0.6s ease-in forwards;
+}
+
+.flipBottomAnimate {
+  animation: flipBottom 0.6s ease-out forwards;
+}
+
+.flipBottomBackAnimate {
+  animation: flipBottomBack 0.6s ease-out forwards;
+}
+
+@keyframes flipTop {
+  0% { transform: rotateX(0deg); }
+  100% { transform: rotateX(-90deg); }
+}
+
+@keyframes flipTopBack {
+  0% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+@keyframes flipBottom {
+  0% { transform: rotateX(0deg); }
+  100% { transform: rotateX(90deg); }
+}
+
+@keyframes flipBottomBack {
+  0% { transform: rotateX(-90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+.flipSeparator {
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--text-secondary);
+  margin-top: -8px;
   opacity: 0.5;
 }
 
@@ -189,7 +315,8 @@
     width: 100%;
   }
 
-  .center {
+  .center,
+  .rightTime {
     width: 100%;
     justify-content: flex-start;
   }
@@ -198,8 +325,27 @@
     font-size: 16px;
   }
 
-  .time {
+  .flipCard {
+    width: 28px;
+    height: 36px;
+  }
+
+  .flipCard span {
     font-size: 18px;
+    line-height: 18px;
+  }
+
+  .flipTop span,
+  .flipTopBack span,
+  .flipBottom span,
+  .flipBottomBack span {
+    height: 36px;
+    line-height: 36px;
+  }
+
+  .flipSeparator {
+    font-size: 16px;
+    margin-top: -6px;
   }
 
   .weatherEmoji {

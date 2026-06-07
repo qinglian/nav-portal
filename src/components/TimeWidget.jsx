@@ -1,7 +1,68 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { Calendar, Clock, MapPin, Droplets, Wind } from 'lucide-react'
+import { Calendar, MapPin } from 'lucide-react'
 import { fetchWeather, getSavedCity, getLocation, reverseGeocode, saveCity, getWeatherEnabled } from '../utils/weather'
 import styles from './TimeWidget.module.css'
+
+// ==================== 翻页数字组件 ====================
+function FlipDigit({ value, label }) {
+  const [prevValue, setPrevValue] = useState(value)
+  const [isFlipping, setIsFlipping] = useState(false)
+  const prevRef = useRef(value)
+
+  useEffect(() => {
+    if (value !== prevRef.current) {
+      setPrevValue(prevRef.current)
+      setIsFlipping(true)
+      prevRef.current = value
+      const timer = setTimeout(() => setIsFlipping(false), 600)
+      return () => clearTimeout(timer)
+    }
+  }, [value])
+
+  const displayValue = String(value).padStart(2, '0')
+  const displayPrev = String(prevValue).padStart(2, '0')
+
+  return (
+    <div className={styles.flipUnit}>
+      <div className={styles.flipCard}>
+        {/* 上半部分 - 当前值 */}
+        <div className={`${styles.flipTop} ${isFlipping ? styles.flipTopAnimate : ''}`}>
+          <span>{displayValue}</span>
+        </div>
+        {/* 上半部分 - 旧值（翻转时显示） */}
+        <div className={`${styles.flipTopBack} ${isFlipping ? styles.flipTopBackAnimate : ''}`}>
+          <span>{displayPrev}</span>
+        </div>
+        {/* 下半部分 - 当前值 */}
+        <div className={`${styles.flipBottom} ${isFlipping ? styles.flipBottomAnimate : ''}`}>
+          <span>{displayValue}</span>
+        </div>
+        {/* 下半部分 - 旧值（翻转时显示） */}
+        <div className={`${styles.flipBottomBack} ${isFlipping ? styles.flipBottomBackAnimate : ''}`}>
+          <span>{displayPrev}</span>
+        </div>
+      </div>
+      {label && <span className={styles.flipLabel}>{label}</span>}
+    </div>
+  )
+}
+
+// ==================== 翻页时钟 ====================
+function FlipClock({ date }) {
+  const hours = date.getHours()
+  const minutes = date.getMinutes()
+  const seconds = date.getSeconds()
+
+  return (
+    <div className={styles.flipClock}>
+      <FlipDigit value={hours} />
+      <span className={styles.flipSeparator}>:</span>
+      <FlipDigit value={minutes} />
+      <span className={styles.flipSeparator}>:</span>
+      <FlipDigit value={seconds} />
+    </div>
+  )
+}
 
 // ==================== 拟物化天气动画 ====================
 function WeatherEffect({ type }) {
@@ -105,7 +166,6 @@ function WeatherEffect({ type }) {
       time += 0.016
 
       if (type === 'rain') {
-        // 远景雨（细、慢、淡）
         drops.forEach(d => {
           const alpha = d.o * (0.6 + 0.4 * Math.sin(time * 3 + d.x * 0.1))
           ctx.beginPath()
@@ -116,7 +176,6 @@ function WeatherEffect({ type }) {
           ctx.lineCap = 'round'
           ctx.stroke()
 
-          // 溅落
           if (d.y + d.len >= h - 2) {
             const splashCount = d.len > 15 ? 4 : 2
             for (let i = 0; i < splashCount; i++) {
@@ -138,7 +197,6 @@ function WeatherEffect({ type }) {
           if (d.y > h + 30) Object.assign(d, makeDrop(w, h, false))
         })
 
-        // 底部湿润反光
         const wg = ctx.createLinearGradient(0, h - 12, 0, h)
         wg.addColorStop(0, 'rgba(100, 130, 170, 0)')
         wg.addColorStop(0.5, 'rgba(100, 130, 170, 0.03)')
@@ -158,7 +216,6 @@ function WeatherEffect({ type }) {
           ctx.globalAlpha = f.o
 
           if (f.r > 2.5) {
-            // 精致六角雪花
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'
             ctx.lineWidth = 0.6
             for (let i = 0; i < 6; i++) {
@@ -169,7 +226,6 @@ function WeatherEffect({ type }) {
               ctx.moveTo(0, 0)
               ctx.lineTo(ex, ey)
               ctx.stroke()
-              // 分支
               for (let j = 1; j <= 2; j++) {
                 const t = j * 0.35
                 const bx = ex * t
@@ -185,7 +241,6 @@ function WeatherEffect({ type }) {
                 ctx.stroke()
               }
             }
-            // 中心小点
             ctx.beginPath()
             ctx.arc(0, 0, 0.8, 0, Math.PI * 2)
             ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'
@@ -203,7 +258,6 @@ function WeatherEffect({ type }) {
           if (f.y > h + 20) Object.assign(f, makeFlake(w, h, false))
         })
 
-        // 底部积雪
         const sg = ctx.createLinearGradient(0, h - 10, 0, h)
         sg.addColorStop(0, 'rgba(230, 235, 245, 0)')
         sg.addColorStop(1, 'rgba(230, 235, 245, 0.06)')
@@ -214,7 +268,6 @@ function WeatherEffect({ type }) {
         const sx = w * 0.9
         const sy = h * 0.15
 
-        // 大光晕
         const g1 = ctx.createRadialGradient(sx, sy, 0, sx, sy, Math.max(w, h) * 0.7)
         g1.addColorStop(0, 'rgba(255, 215, 80, 0.08)')
         g1.addColorStop(0.2, 'rgba(255, 200, 60, 0.04)')
@@ -222,7 +275,6 @@ function WeatherEffect({ type }) {
         ctx.fillStyle = g1
         ctx.fillRect(0, 0, w, h)
 
-        // 太阳
         const g2 = ctx.createRadialGradient(sx, sy, 0, sx, sy, 18)
         g2.addColorStop(0, 'rgba(255, 245, 200, 0.8)')
         g2.addColorStop(0.4, 'rgba(255, 225, 130, 0.4)')
@@ -232,7 +284,6 @@ function WeatherEffect({ type }) {
         ctx.arc(sx, sy, 18, 0, Math.PI * 2)
         ctx.fill()
 
-        // 光芒
         sunAngle += 0.002
         for (let i = 0; i < 12; i++) {
           const a = sunAngle + (Math.PI * 2 / 12) * i
@@ -248,7 +299,6 @@ function WeatherEffect({ type }) {
           ctx.stroke()
         }
 
-        // 光尘
         fogParts.forEach(p => {
           const flicker = 0.4 + 0.6 * Math.sin(time * 1.2 + p.phase)
           ctx.beginPath()
@@ -266,7 +316,6 @@ function WeatherEffect({ type }) {
           ctx.globalAlpha = c.o
           const color = type === 'overcast' ? 'rgba(130, 140, 155, 1)' : 'rgba(215, 222, 232, 1)'
           ctx.fillStyle = color
-          // 多椭圆叠加成云
           const drawBlob = (ox, oy, rx, ry) => {
             ctx.beginPath()
             ctx.ellipse(c.x + ox, c.y + oy, rx, ry, 0, 0, Math.PI * 2)
@@ -377,7 +426,6 @@ export default function TimeWidget() {
     if (weatherEnabled) {
       loadWeather()
     } else {
-      // 关闭天气时清除数据
       setWeather(null)
       setCityName('')
       setWeatherError('')
@@ -395,10 +443,6 @@ export default function TimeWidget() {
   const formatDate = (date) => {
     const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${weekDays[date.getDay()]}`
-  }
-
-  const formatTime = (date) => {
-    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
   }
 
   const getGreeting = () => {
@@ -431,7 +475,7 @@ export default function TimeWidget() {
     <div className={`${styles.widget} ${weatherBgClass}`}>
       {weatherEnabled && <WeatherEffect type={weatherType} />}
 
-      <div className={styles.content}>
+      <div className={`${styles.content} ${!weatherEnabled ? styles.contentNoWeather : ''}`}>
         {/* 左侧：问候 + 日期 */}
         <div className={styles.left}>
           <span className={styles.greeting}>{getGreeting()}</span>
@@ -441,40 +485,39 @@ export default function TimeWidget() {
           </div>
         </div>
 
-        {/* 中间：时间 */}
-        <div className={styles.center}>
-          <div className={styles.time}>
-            <Clock size={16} />
-            <span>{formatTime(time)}</span>
-          </div>
+        {/* 中间/右侧：翻页时钟 */}
+        <div className={weatherEnabled ? styles.center : styles.rightTime}>
+          <FlipClock date={time} />
         </div>
 
-        {/* 右侧：天气 */}
-        <div className={styles.right}>
-          {weatherEnabled && weather && (
-            <div className={styles.weatherInfo}>
-              <span className={styles.weatherEmoji}>{weather.icon}</span>
-              <div className={styles.weatherDetail}>
-                <span className={styles.weatherTemp}>{weather.temp}°C</span>
-                <span className={styles.weatherText}>{weather.text}</span>
-              </div>
-              {cityName && (
-                <div className={styles.weatherCity}>
-                  <MapPin size={11} />
-                  <span>{cityName}</span>
+        {/* 右侧：天气（仅开启时显示） */}
+        {weatherEnabled && (
+          <div className={styles.right}>
+            {weather && (
+              <div className={styles.weatherInfo}>
+                <span className={styles.weatherEmoji}>{weather.icon}</span>
+                <div className={styles.weatherDetail}>
+                  <span className={styles.weatherTemp}>{weather.temp}°C</span>
+                  <span className={styles.weatherText}>{weather.text}</span>
                 </div>
-              )}
-            </div>
-          )}
+                {cityName && (
+                  <div className={styles.weatherCity}>
+                    <MapPin size={11} />
+                    <span>{cityName}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {weatherEnabled && weatherLoading && (
-            <div className={styles.weatherLoading}>天气加载中...</div>
-          )}
+            {weatherLoading && (
+              <div className={styles.weatherLoading}>天气加载中...</div>
+            )}
 
-          {weatherEnabled && weatherError && !weather && (
-            <div className={styles.weatherError}>{weatherError}</div>
-          )}
-        </div>
+            {weatherError && !weather && (
+              <div className={styles.weatherError}>{weatherError}</div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
