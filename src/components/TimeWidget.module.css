@@ -123,14 +123,36 @@
   gap: 2px;
 }
 
+/* 翻页卡片容器 */
 .flipCard {
   position: relative;
   width: 44px;
   height: 52px;
-  perspective: 300px;
+  perspective: 400px;
 }
 
-/* 翻页卡片基础 */
+/* 静态显示的面（不翻转时） */
+.flipStatic {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #4a4a5a 0%, #3a3a4a 50%, #2a2a3a 50%, #1a1a2a 100%);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.flipStatic span {
+  font-size: 26px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* 翻转时的面 */
 .flipFace {
   position: absolute;
   left: 0;
@@ -160,12 +182,12 @@
 /* 上半部分 */
 .flipTop {
   top: 0;
-  background: linear-gradient(180deg, #555565 0%, #454555 100%);
+  background: linear-gradient(180deg, #4a4a5a 0%, #3a3a4a 100%);
   border-radius: 6px 6px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
   transform-origin: bottom;
-  z-index: 2;
+  z-index: 3;
 }
 
 .flipTop span {
@@ -174,13 +196,13 @@
 
 .flipTopBack {
   top: 0;
-  background: linear-gradient(180deg, #555565 0%, #454555 100%);
+  background: linear-gradient(180deg, #4a4a5a 0%, #3a3a4a 100%);
   border-radius: 6px 6px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
   transform-origin: bottom;
   transform: rotateX(90deg);
-  z-index: 1;
+  z-index: 2;
 }
 
 .flipTopBack span {
@@ -190,12 +212,12 @@
 /* 下半部分 */
 .flipBottom {
   bottom: 0;
-  background: linear-gradient(180deg, #454555 0%, #353545 100%);
+  background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
   border-radius: 0 0 6px 6px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: none;
   transform-origin: top;
-  z-index: 1;
+  z-index: 2;
 }
 
 .flipBottom span {
@@ -204,13 +226,13 @@
 
 .flipBottomBack {
   bottom: 0;
-  background: linear-gradient(180deg, #454555 0%, #353545 100%);
+  background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
   border-radius: 0 0 6px 6px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: none;
   transform-origin: top;
   transform: rotateX(-90deg);
-  z-index: 2;
+  z-index: 3;
 }
 
 .flipBottomBack span {
@@ -259,12 +281,11 @@
   content: '';
   position: absolute;
   top: 50%;
-  left: 0;
-  width: 100%;
+  left: 2px;
+  right: 2px;
   height: 1px;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
   z-index: 10;
-  transform: translateY(-0.5px);
 }
 
 .flipSeparator {
@@ -366,6 +387,7 @@
     height: 44px;
   }
 
+  .flipStatic span,
   .flipFace span {
     font-size: 22px;
     height: 44px;

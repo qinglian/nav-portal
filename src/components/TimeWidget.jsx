@@ -25,22 +25,33 @@ function FlipDigit({ value, label }) {
   return (
     <div className={styles.flipUnit}>
       <div className={styles.flipCard}>
-        {/* 上半部分 - 当前值 */}
-        <div className={`${styles.flipFace} ${styles.flipTop} ${isFlipping ? styles.flipTopAnimate : ''}`}>
-          <span>{displayValue}</span>
-        </div>
-        {/* 上半部分 - 旧值（翻转时显示） */}
-        <div className={`${styles.flipFace} ${styles.flipTopBack} ${isFlipping ? styles.flipTopBackAnimate : ''}`}>
-          <span>{displayPrev}</span>
-        </div>
-        {/* 下半部分 - 当前值 */}
-        <div className={`${styles.flipFace} ${styles.flipBottom} ${isFlipping ? styles.flipBottomAnimate : ''}`}>
-          <span>{displayValue}</span>
-        </div>
-        {/* 下半部分 - 旧值（翻转时显示） */}
-        <div className={`${styles.flipFace} ${styles.flipBottomBack} ${isFlipping ? styles.flipBottomBackAnimate : ''}`}>
-          <span>{displayPrev}</span>
-        </div>
+        {/* 静态背景层（不翻转时显示） */}
+        {!isFlipping && (
+          <div className={styles.flipStatic}>
+            <span>{displayValue}</span>
+          </div>
+        )}
+        {/* 翻转动画层 */}
+        {isFlipping && (
+          <>
+            {/* 上半部分 - 当前值（向下翻转消失） */}
+            <div className={`${styles.flipFace} ${styles.flipTop} ${styles.flipTopAnimate}`}>
+              <span>{displayValue}</span>
+            </div>
+            {/* 上半部分 - 旧值（从上方翻入） */}
+            <div className={`${styles.flipFace} ${styles.flipTopBack} ${styles.flipTopBackAnimate}`}>
+              <span>{displayPrev}</span>
+            </div>
+            {/* 下半部分 - 当前值（向下翻转消失） */}
+            <div className={`${styles.flipFace} ${styles.flipBottom} ${styles.flipBottomAnimate}`}>
+              <span>{displayValue}</span>
+            </div>
+            {/* 下半部分 - 旧值（从下方翻入） */}
+            <div className={`${styles.flipFace} ${styles.flipBottomBack} ${styles.flipBottomBackAnimate}`}>
+              <span>{displayPrev}</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -395,27 +406,33 @@ export default function TimeWidget() {
     setWeatherError('')
     try {
       const saved = getSavedCity()
-      if (saved) {
+      if (saved && saved.lat && saved.lon) {
         setCityName(saved.name)
         const w = await fetchWeather(saved.lat, saved.lon)
-        if (w) setWeather(w)
-        else setWeatherError('天气获取失败')
+        if (w) {
+          setWeather(w)
+        } else {
+          setWeatherError('天气获取失败，请检查网络')
+        }
       } else {
+        // 尝试定位
         try {
           const loc = await getLocation()
-          const geo = await reverseGeocode(loc.lat, loc.lon)
-          if (geo) {
-            setCityName(geo.name)
-            saveCity({ lat: loc.lat, lon: loc.lon, name: geo.name })
-          }
+          setCityName('当前位置')
+          saveCity({ lat: loc.lat, lon: loc.lon, name: '当前位置' })
           const w = await fetchWeather(loc.lat, loc.lon)
-          if (w) setWeather(w)
-          else setWeatherError('天气获取失败')
-        } catch {
-          setWeatherError('定位失败，请在网站配置中设置城市')
+          if (w) {
+            setWeather(w)
+          } else {
+            setWeatherError('天气获取失败')
+          }
+        } catch (locErr) {
+          console.log('定位失败:', locErr)
+          setWeatherError('定位失败，请在网站配置中搜索城市')
         }
       }
-    } catch {
+    } catch (err) {
+      console.error('天气加载错误:', err)
       setWeatherError('天气获取失败')
     }
     setWeatherLoading(false)
