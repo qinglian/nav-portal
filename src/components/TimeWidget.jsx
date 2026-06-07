@@ -26,23 +26,22 @@ function FlipDigit({ value, label }) {
     <div className={styles.flipUnit}>
       <div className={styles.flipCard}>
         {/* 上半部分 - 当前值 */}
-        <div className={`${styles.flipTop} ${isFlipping ? styles.flipTopAnimate : ''}`}>
-          <span className={styles.flipNumber}>{displayValue}</span>
+        <div className={`${styles.flipFace} ${styles.flipTop} ${isFlipping ? styles.flipTopAnimate : ''}`}>
+          <span>{displayValue}</span>
         </div>
         {/* 上半部分 - 旧值（翻转时显示） */}
-        <div className={`${styles.flipTopBack} ${isFlipping ? styles.flipTopBackAnimate : ''}`}>
-          <span className={styles.flipNumber}>{displayPrev}</span>
+        <div className={`${styles.flipFace} ${styles.flipTopBack} ${isFlipping ? styles.flipTopBackAnimate : ''}`}>
+          <span>{displayPrev}</span>
         </div>
         {/* 下半部分 - 当前值 */}
-        <div className={`${styles.flipBottom} ${isFlipping ? styles.flipBottomAnimate : ''}`}>
-          <span className={styles.flipNumber}>{displayValue}</span>
+        <div className={`${styles.flipFace} ${styles.flipBottom} ${isFlipping ? styles.flipBottomAnimate : ''}`}>
+          <span>{displayValue}</span>
         </div>
         {/* 下半部分 - 旧值（翻转时显示） */}
-        <div className={`${styles.flipBottomBack} ${isFlipping ? styles.flipBottomBackAnimate : ''}`}>
-          <span className={styles.flipNumber}>{displayPrev}</span>
+        <div className={`${styles.flipFace} ${styles.flipBottomBack} ${isFlipping ? styles.flipBottomBackAnimate : ''}`}>
+          <span>{displayPrev}</span>
         </div>
       </div>
-      {label && <span className={styles.flipLabel}>{label}</span>}
     </div>
   )
 }

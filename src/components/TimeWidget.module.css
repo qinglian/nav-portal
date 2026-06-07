@@ -113,133 +113,166 @@
 .flipClock {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .flipUnit {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 2px;
 }
 
 .flipCard {
   position: relative;
-  width: 40px;
-  height: 48px;
-  perspective: 200px;
+  width: 44px;
+  height: 52px;
+  perspective: 300px;
 }
 
-/* 数字文字基础样式 */
-.flipNumber {
-  display: block;
+/* 翻页卡片基础 */
+.flipFace {
+  position: absolute;
+  left: 0;
   width: 100%;
-  text-align: center;
-  font-size: 24px;
+  height: 50%;
+  overflow: hidden;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flipFace span {
+  font-size: 26px;
   font-weight: 700;
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-/* 上半部分 - 显示数字上半 */
-.flipTop,
-.flipTopBack {
   position: absolute;
-  top: 0;
   left: 0;
   width: 100%;
-  height: 50%;
-  overflow: hidden;
-  background: linear-gradient(180deg, #4a4a5a 0%, #3a3a4a 100%);
+  text-align: center;
+  height: 52px;
+  line-height: 52px;
+}
+
+/* 上半部分 */
+.flipTop {
+  top: 0;
+  background: linear-gradient(180deg, #555565 0%, #454555 100%);
   border-radius: 6px 6px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
-  backface-visibility: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
   transform-origin: bottom;
+  z-index: 2;
 }
 
-/* 上半部分文字 - 只显示上半 */
-.flipTop .flipNumber,
-.flipTopBack .flipNumber {
-  position: absolute;
+.flipTop span {
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 48px;
-  line-height: 48px;
 }
 
-/* 下半部分 - 显示数字下半 */
-.flipBottom,
-.flipBottomBack {
-  position: absolute;
+.flipTopBack {
+  top: 0;
+  background: linear-gradient(180deg, #555565 0%, #454555 100%);
+  border-radius: 6px 6px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+  transform-origin: bottom;
+  transform: rotateX(90deg);
+  z-index: 1;
+}
+
+.flipTopBack span {
+  top: 0;
+}
+
+/* 下半部分 */
+.flipBottom {
   bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 50%;
-  overflow: hidden;
-  background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+  background: linear-gradient(180deg, #454555 0%, #353545 100%);
   border-radius: 0 0 6px 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: none;
-  backface-visibility: hidden;
   transform-origin: top;
+  z-index: 1;
 }
 
-/* 下半部分文字 - 只显示下半 */
-.flipBottom .flipNumber,
-.flipBottomBack .flipNumber {
-  position: absolute;
+.flipBottom span {
   bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 48px;
-  line-height: 48px;
+}
+
+.flipBottomBack {
+  bottom: 0;
+  background: linear-gradient(180deg, #454555 0%, #353545 100%);
+  border-radius: 0 0 6px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: none;
+  transform-origin: top;
+  transform: rotateX(-90deg);
+  z-index: 2;
+}
+
+.flipBottomBack span {
+  bottom: 0;
 }
 
 /* 翻转动画 */
 .flipTopAnimate {
-  animation: flipTop 0.6s ease-in forwards;
+  animation: flipTopDown 0.5s ease-in forwards;
 }
 
 .flipTopBackAnimate {
-  animation: flipTopBack 0.6s ease-in forwards;
+  animation: flipTopUp 0.5s ease-in forwards;
 }
 
 .flipBottomAnimate {
-  animation: flipBottom 0.6s ease-out forwards;
+  animation: flipBottomDown 0.5s ease-out forwards;
 }
 
 .flipBottomBackAnimate {
-  animation: flipBottomBack 0.6s ease-out forwards;
+  animation: flipBottomUp 0.5s ease-out forwards;
 }
 
-@keyframes flipTop {
+@keyframes flipTopDown {
   0% { transform: rotateX(0deg); }
   100% { transform: rotateX(-90deg); }
 }
 
-@keyframes flipTopBack {
+@keyframes flipTopUp {
   0% { transform: rotateX(90deg); }
   100% { transform: rotateX(0deg); }
 }
 
-@keyframes flipBottom {
+@keyframes flipBottomDown {
   0% { transform: rotateX(0deg); }
   100% { transform: rotateX(90deg); }
 }
 
-@keyframes flipBottomBack {
+@keyframes flipBottomUp {
   0% { transform: rotateX(-90deg); }
   100% { transform: rotateX(0deg); }
+}
+
+/* 中间分隔线 */
+.flipCard::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  transform: translateY(-0.5px);
 }
 
 .flipSeparator {
   font-size: 24px;
   font-weight: 300;
   color: var(--text-primary);
-  margin-top: -4px;
-  opacity: 0.6;
+  margin-top: -6px;
+  opacity: 0.5;
 }
 
 /* ==================== 右侧：天气 ==================== */
@@ -329,27 +362,19 @@
   }
 
   .flipCard {
-    width: 32px;
-    height: 40px;
+    width: 36px;
+    height: 44px;
   }
 
-  .flipNumber {
-    font-size: 20px;
-    height: 40px;
-    line-height: 40px;
-  }
-
-  .flipTop .flipNumber,
-  .flipTopBack .flipNumber,
-  .flipBottom .flipNumber,
-  .flipBottomBack .flipNumber {
-    height: 40px;
-    line-height: 40px;
+  .flipFace span {
+    font-size: 22px;
+    height: 44px;
+    line-height: 44px;
   }
 
   .flipSeparator {
-    font-size: 18px;
-    margin-top: -2px;
+    font-size: 20px;
+    margin-top: -4px;
   }
 
   .weatherEmoji {
