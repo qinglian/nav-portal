@@ -383,6 +383,96 @@
   transform: translateX(16px);
 }
 
+/* 配置分割线 */
+.configDivider {
+  height: 1px;
+  background: var(--glass-border);
+  margin: 8px 0;
+}
+
+/* 配置区块 */
+.configSection {
+  padding: 4px 0;
+}
+
+/* 城市搜索框 */
+.citySearchBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px 10px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s;
+}
+
+.citySearchBox:focus-within {
+  border-color: var(--accent-primary);
+}
+
+.citySearchIcon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.citySearchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.citySearchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* 城市搜索结果 */
+.cityResults {
+  margin-top: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+}
+
+.cityResultItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.cityResultItem:last-child {
+  border-bottom: none;
+}
+
+.cityResultItem:hover {
+  background: var(--glass-bg-heavy);
+}
+
+.cityResultName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.cityResultAdm {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
 @media (max-width: 640px) {
   .siteConfigBtn span {
     display: none;
