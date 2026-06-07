@@ -72,8 +72,8 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
       onClick={handleClick}
       title={isOffline ? '该网站暂时无法访问' : isUnknown ? '状态未知（可能需要VPN）' : site.url}
     >
-      {/* 状态小圆点 */}
-      {showStatus && (
+      {/* 状态小圆点 - 仅在开启检测且非编辑模式时显示 */}
+      {siteStatusEnabled && showStatus && !isEditMode && (
         <div
           className={`${styles.statusDot} ${
             isOffline ? styles.statusDotOffline :

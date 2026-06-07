@@ -1,5 +1,5 @@
 import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import DataManager from './DataManager'
 import styles from './Header.module.css'
@@ -7,6 +7,13 @@ import styles from './Header.module.css'
 export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker, onLogoClick, siteStatusEnabled, onToggleSiteStatus }) {
   const { theme, toggleTheme } = useTheme()
   const [showSiteConfig, setShowSiteConfig] = useState(false)
+
+  // 当编辑模式关闭时，自动关闭网站配置菜单
+  useEffect(() => {
+    if (!isEditMode) {
+      setShowSiteConfig(false)
+    }
+  }, [isEditMode])
 
   return (
     <header className={styles.header}>
