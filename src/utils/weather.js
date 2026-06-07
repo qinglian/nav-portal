@@ -50,6 +50,9 @@ export function getSavedCity() {
 // 保存城市
 export function saveCity(cityData) {
   localStorage.setItem('nav-weather-city', JSON.stringify(cityData))
+  // 切换城市时清除天气缓存，确保获取新数据
+  localStorage.removeItem(WEATHER_CACHE_KEY)
+  localStorage.removeItem(WEATHER_CACHE_TIME)
 }
 
 // 获取天气开关
@@ -80,8 +83,9 @@ export function getLocation() {
 // 搜索城市（Open-Meteo Geocoding，免费无需Key）
 export async function searchCity(keyword) {
   try {
+    const lang = navigator.language.startsWith('zh') ? 'zh' : 'en'
     const resp = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(keyword)}&count=5&language=zh&format=json`
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(keyword)}&count=8&language=${lang}&format=json`
     )
     const data = await resp.json()
     if (data.results) {
@@ -103,7 +107,8 @@ export async function searchCity(keyword) {
 
 // 获取天气数据（Open-Meteo，免费无需Key，支持CORS）
 export async function fetchWeather(lat, lon) {
-  const cacheKey = `${lat.toFixed(2)},${lon.toFixed(2)}`
+  // 缓存key使用更高精度
+  const cacheKey = `${lat.toFixed(4)},${lon.toFixed(4)}`
   const cached = localStorage.getItem(WEATHER_CACHE_KEY)
   const cachedTime = localStorage.getItem(WEATHER_CACHE_TIME)
   if (cached && cachedTime) {
@@ -150,16 +155,24 @@ export async function fetchWeather(lat, lon) {
   }
 }
 
-// 反向地理编码（经纬度 → 城市名）
+// 反向地理编码（经纬度 → 城市名，使用 Open-Meteo 搜索最近城市）
 export async function reverseGeocode(lat, lon) {
   try {
+    // 通过搜索附近已知城市来获取名称
     const resp = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m&timezone=auto`
+      `https://geocoding-api.open-meteo.com/v1/search?name=&count=1&language=zh&format=json`
     )
-    const data = await resp.json()
-    // Open-Meteo 没有反向地理编码，返回简化结果
+    // Open-Meteo 没有反向地理编码，使用 Nominatim（免费）
+    const resp2 = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh&zoom=10`
+    )
+    const data = await resp2.json()
+    if (data.address) {
+      const city = data.address.city || data.address.town || data.address.county || data.address.state || ''
+      return { name: city || '当前位置', admin1: data.address.country || '' }
+    }
     return { name: '当前位置', admin1: '' }
   } catch {
-    return null
+    return { name: '当前位置', admin1: '' }
   }
 }

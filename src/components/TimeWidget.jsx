@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Calendar, MapPin } from 'lucide-react'
-import { fetchWeather, getSavedCity, getLocation, saveCity, getWeatherEnabled } from '../utils/weather'
+import { fetchWeather, getSavedCity, getLocation, reverseGeocode, saveCity, getWeatherEnabled } from '../utils/weather'
 import styles from './TimeWidget.module.css'
 
 // ==================== 数字时钟 ====================
@@ -367,8 +367,11 @@ export default function TimeWidget() {
         // 尝试定位
         try {
           const loc = await getLocation()
-          setCityName('当前位置')
-          saveCity({ lat: loc.lat, lon: loc.lon, name: '当前位置' })
+          // 反向地理编码获取城市名
+          const geo = await reverseGeocode(loc.lat, loc.lon)
+          const cityName = geo?.name || '当前位置'
+          setCityName(cityName)
+          saveCity({ lat: loc.lat, lon: loc.lon, name: cityName })
           const w = await fetchWeather(loc.lat, loc.lon)
           if (w) {
             setWeather(w)
