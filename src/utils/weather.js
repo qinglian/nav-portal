@@ -4,7 +4,7 @@ const WEATHER_CACHE_KEY = 'nav-weather-cache'
 const WEATHER_CACHE_TIME = 'nav-weather-cache-time'
 const CACHE_DURATION = 30 * 60 * 1000 // 30分钟
 
-// 天气代码映射
+// 天气代码映射 (和风天气代码)
 const WEATHER_MAP = {
   '100': { type: 'sunny', desc: '晴', icon: '☀️' },
   '101': { type: 'cloudy', desc: '多云', icon: '⛅' },
@@ -108,32 +108,34 @@ export function getLocation() {
   })
 }
 
-// 搜索城市（使用高德地理编码API，国内可用）
+// 和风天气 API Key
+const QW_KEY = '8c3d0455f8a4478eaa7e1c5b7289e0c9'
+
+// 搜索城市（使用和风天气城市搜索API）
 export async function searchCity(keyword) {
   try {
-    // 使用高德地图API（需要Key，但这里用免费的公共接口）
     const resp = await fetch(
-      `https://restapi.amap.com/v3/assistant/inputtips?key=YOUR_AMAP_KEY&keywords=${encodeURIComponent(keyword)}&datatype=all`
+      `https://geoapi.qweather.com/v2/city/lookup?location=${encodeURIComponent(keyword)}&key=${QW_KEY}&number=10`
     )
     const data = await resp.json()
-    if (data.tips) {
-      return data.tips.map(t => ({
-        id: t.adcode || t.name,
-        name: t.name,
-        admin1: t.district || '',
-        country: '中国',
-        lat: t.location ? parseFloat(t.location.split(',')[1]) : 0,
-        lon: t.location ? parseFloat(t.location.split(',')[0]) : 0,
-      })).filter(t => t.lat && t.lon)
+    if (data.code === '200' && data.location) {
+      return data.location.map(r => ({
+        id: r.id,
+        name: r.name,
+        admin1: r.adm1 || '',
+        country: r.country || '',
+        lat: parseFloat(r.lat),
+        lon: parseFloat(r.lon),
+      }))
     }
     return []
-  } catch {
-    // 备用：使用本地简单匹配
+  } catch (err) {
+    console.error('城市搜索失败:', err)
     return []
   }
 }
 
-// 获取天气数据（使用和风天气免费版，国内可用）
+// 获取天气数据
 export async function fetchWeather(lat, lon) {
   const cacheKey = `${lat.toFixed(2)},${lon.toFixed(2)}`
   const cached = localStorage.getItem(WEATHER_CACHE_KEY)
@@ -147,14 +149,11 @@ export async function fetchWeather(lat, lon) {
     } catch {}
   }
 
-  // 使用和风天气免费版API（国内可用）
-  // 注意：这里使用一个公共的demo key，实际使用建议申请自己的key
-  const key = '8c3d0455f8a4478eaa7e1c5b7289e0c9'
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 10000)
     const resp = await fetch(
-      `https://devapi.qweather.com/v7/weather/now?location=${lon.toFixed(2)},${lat.toFixed(2)}&key=${key}`,
+      `https://devapi.qweather.com/v7/weather/now?location=${lon.toFixed(2)},${lat.toFixed(2)}&key=${QW_KEY}`,
       { signal: controller.signal }
     )
     clearTimeout(timeout)
@@ -188,9 +187,8 @@ export async function fetchWeather(lat, lon) {
 // 反向地理编码（经纬度 → 城市名）
 export async function reverseGeocode(lat, lon) {
   try {
-    const key = '8c3d0455f8a4478eaa7e1c5b7289e0c9'
     const resp = await fetch(
-      `https://geoapi.qweather.com/v2/city/lookup?location=${lon.toFixed(2)},${lat.toFixed(2)}&key=${key}&number=1`
+      `https://geoapi.qweather.com/v2/city/lookup?location=${lon.toFixed(2)},${lat.toFixed(2)}&key=${QW_KEY}&number=1`
     )
     const data = await resp.json()
     if (data.code === '200' && data.location?.[0]) {

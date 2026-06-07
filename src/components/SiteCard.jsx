@@ -3,7 +3,7 @@ import { Edit2, Trash2, GripVertical } from 'lucide-react'
 import { checkSiteStatus } from '../utils/siteStatus'
 import styles from './SiteCard.module.css'
 
-function getFaviconUrl(url) {
+function getAutoFaviconUrl(url) {
   try {
     const urlObj = new URL(url)
     return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`
@@ -26,7 +26,9 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
   const [siteStatus, setSiteStatus] = useState(null)
   const [showStatus, setShowStatus] = useState(false)
   const cardRef = useRef(null)
-  const faviconUrl = getFaviconUrl(site.url)
+  
+  // 优先使用自定义图标URL，否则自动获取favicon
+  const iconUrl = site.iconUrl || getAutoFaviconUrl(site.url)
   const fallbackColor = generateColor(site.url)
 
   useEffect(() => {
@@ -91,9 +93,9 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
       )}
 
       <div className={`${styles.iconWrapper} ${shouldShowOffline ? styles.iconWrapperOffline : ''}`} style={{ background: fallbackColor }}>
-        {faviconUrl && !iconError ? (
+        {iconUrl && !iconError ? (
           <img
-            src={faviconUrl}
+            src={iconUrl}
             alt={site.name}
             className={styles.icon}
             onError={() => setIconError(true)}

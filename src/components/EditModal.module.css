@@ -101,6 +101,12 @@
   color: var(--text-tertiary);
 }
 
+.fieldHint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: -4px;
+}
+
 /* Tag Select for Site */
 .tagSelect {
   display: flex;

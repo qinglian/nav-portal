@@ -8,7 +8,7 @@ export default function EditModal({ isOpen, onClose, mode, data, categoryTags = 
     url: '',
     description: '',
     tag: '',
-    icon: 'Folder',
+    iconUrl: '',
     tags: []
   })
   const [newTag, setNewTag] = useState('')
@@ -21,7 +21,7 @@ export default function EditModal({ isOpen, onClose, mode, data, categoryTags = 
         url: data.url || '',
         description: data.description || '',
         tag: data.tag || (categoryTags[0] || ''),
-        icon: data.icon || 'Folder',
+        iconUrl: data.iconUrl || '',
         tags: data.tags || categoryTags || []
       })
     } else if (isOpen && !data) {
@@ -30,7 +30,7 @@ export default function EditModal({ isOpen, onClose, mode, data, categoryTags = 
         url: '',
         description: '',
         tag: categoryTags[0] || '',
-        icon: 'Folder',
+        iconUrl: '',
         tags: categoryTags || []
       })
     }
@@ -135,6 +135,19 @@ export default function EditModal({ isOpen, onClose, mode, data, categoryTags = 
                   placeholder="简短描述..."
                   className={styles.input}
                 />
+              </div>
+
+              {/* 图标URL */}
+              <div className={styles.field}>
+                <label className={styles.label}>图标URL</label>
+                <input
+                  type="url"
+                  value={formData.iconUrl}
+                  onChange={(e) => setFormData({ ...formData, iconUrl: e.target.value })}
+                  placeholder="https://example.com/icon.png（留空自动获取）"
+                  className={styles.input}
+                />
+                <span className={styles.fieldHint}>留空将自动获取网站图标，获取失败则显示首字母</span>
               </div>
 
               {/* 子标签选择 */}
