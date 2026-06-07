@@ -10,6 +10,18 @@ export default function DataManager({ isEditMode }) {
   const [showMenu, setShowMenu] = useState(false)
   const [showCloudPanel, setShowCloudPanel] = useState(false)
 
+  // 监听其他菜单打开事件，关闭自己
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail !== 'dataManager') {
+        setShowMenu(false)
+        setShowCloudPanel(false)
+      }
+    }
+    window.addEventListener('closeOtherMenus', handler)
+    return () => window.removeEventListener('closeOtherMenus', handler)
+  }, [])
+
   // 云备份状态
   const [selectedPreset, setSelectedPreset] = useState('jianguoyun')
   const [customHost, setCustomHost] = useState('')
@@ -245,7 +257,14 @@ export default function DataManager({ isEditMode }) {
         <div className={styles.container}>
           <button 
             className={styles.menuBtn}
-            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); setShowCloudPanel(false) }}
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              const willOpen = !showMenu;
+              setShowMenu(willOpen); 
+              setShowCloudPanel(false);
+              // 如果打开数据菜单，广播关闭其他菜单
+              if (willOpen) window.dispatchEvent(new CustomEvent('closeOtherMenus', { detail: 'dataManager' }));
+            }}
           >
             <Settings size={14} />
             <span>数据</span>

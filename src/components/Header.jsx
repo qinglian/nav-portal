@@ -43,6 +43,17 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
     return () => document.removeEventListener('click', handleClick)
   }, [showSiteConfig])
 
+  // 监听其他菜单打开事件，关闭自己
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail !== 'siteConfig') {
+        setShowSiteConfig(false)
+      }
+    }
+    window.addEventListener('closeOtherMenus', handler)
+    return () => window.removeEventListener('closeOtherMenus', handler)
+  }, [])
+
   // 城市搜索
   const handleCitySearch = (value) => {
     setCitySearch(value)
@@ -97,7 +108,13 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
             <div className={styles.siteConfigWrapper}>
               <button
                 className={styles.siteConfigBtn}
-                onClick={(e) => { e.stopPropagation(); setShowSiteConfig(!showSiteConfig) }}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  const willOpen = !showSiteConfig;
+                  setShowSiteConfig(willOpen);
+                  // 如果打开配置菜单，广播关闭其他菜单
+                  if (willOpen) window.dispatchEvent(new CustomEvent('closeOtherMenus', { detail: 'siteConfig' }));
+                }}
               >
                 <Settings2 size={14} />
                 <span>网站配置</span>
