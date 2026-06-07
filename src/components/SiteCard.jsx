@@ -61,23 +61,24 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
     return () => card.removeEventListener('contextmenu', handleContextMenu)
   }, [site, onContextMenu])
 
-  const isOffline = siteStatus && siteStatus.online === false && !siteStatus.unknown
-  const isUnknown = siteStatus && siteStatus.unknown === true
+  // 只有开启检测且已获取状态时，才显示离线样式
+  const shouldShowOffline = siteStatusEnabled && siteStatus && siteStatus.online === false && !siteStatus.unknown
+  const shouldShowUnknown = siteStatusEnabled && siteStatus && siteStatus.unknown === true
 
   return (
     <div
       ref={cardRef}
-      className={`${styles.card} ${isOffline ? styles.cardOffline : ''}`}
+      className={`${styles.card} ${shouldShowOffline ? styles.cardOffline : ''}`}
       data-site-card="true"
       onClick={handleClick}
-      title={isOffline ? '该网站暂时无法访问' : isUnknown ? '状态未知（可能需要VPN）' : site.url}
+      title={shouldShowOffline ? '该网站暂时无法访问' : shouldShowUnknown ? '状态未知（可能需要VPN）' : site.url}
     >
       {/* 状态小圆点 - 仅在开启检测且非编辑模式时显示 */}
       {siteStatusEnabled && showStatus && !isEditMode && (
         <div
           className={`${styles.statusDot} ${
-            isOffline ? styles.statusDotOffline :
-            isUnknown ? styles.statusDotUnknown :
+            shouldShowOffline ? styles.statusDotOffline :
+            shouldShowUnknown ? styles.statusDotUnknown :
             styles.statusDotOnline
           }`}
         />
@@ -89,7 +90,7 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
         </div>
       )}
 
-      <div className={`${styles.iconWrapper} ${isOffline ? styles.iconWrapperOffline : ''}`} style={{ background: fallbackColor }}>
+      <div className={`${styles.iconWrapper} ${shouldShowOffline ? styles.iconWrapperOffline : ''}`} style={{ background: fallbackColor }}>
         {faviconUrl && !iconError ? (
           <img
             src={faviconUrl}
@@ -106,7 +107,7 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
       </div>
 
       <div className={styles.content}>
-        <h3 className={`${styles.name} ${isOffline ? styles.nameOffline : ''}`}>{site.name}</h3>
+        <h3 className={`${styles.name} ${shouldShowOffline ? styles.nameOffline : ''}`}>{site.name}</h3>
         {site.description && <p className={styles.description}>{site.description}</p>}
       </div>
 

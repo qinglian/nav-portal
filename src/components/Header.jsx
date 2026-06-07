@@ -31,6 +31,18 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
     }
   }, [isEditMode])
 
+  // 点击外部关闭网站配置菜单
+  useEffect(() => {
+    if (!showSiteConfig) return
+    const handleClick = (e) => {
+      if (!e.target.closest(`.${styles.siteConfigWrapper}`)) {
+        setShowSiteConfig(false)
+      }
+    }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [showSiteConfig])
+
   // 城市搜索
   const handleCitySearch = (value) => {
     setCitySearch(value)

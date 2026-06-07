@@ -118,36 +118,43 @@ export async function fetchWeather(lat, lon) {
     }
   }
 
-  try {
-    const resp = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto`
-    )
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-    const data = await resp.json()
-    if (data.current) {
-      const c = data.current
-      const wmo = mapWMO(c.weather_code)
-      const weather = {
-        temp: Math.round(c.temperature_2m),
-        feelsLike: Math.round(c.apparent_temperature),
-        humidity: c.relative_humidity_2m,
-        windSpeed: Math.round(c.wind_speed_10m),
-        windDir: c.wind_direction_10m,
-        text: wmo.desc,
-        icon: wmo.icon,
-        type: wmo.type,
-        code: c.weather_code,
-      }
+  // 尝试多个 API 端点
+  const endpoints = [
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto`,
+    `https://customer-api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto`,
+  ]
 
-      // 保存缓存
-      localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({ cacheKey, data: weather }))
-      localStorage.setItem(WEATHER_CACHE_TIME, Date.now().toString())
-      return weather
+  for (const url of endpoints) {
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 8000)
+      const resp = await fetch(url, { signal: controller.signal })
+      clearTimeout(timeout)
+      if (!resp.ok) continue
+      const data = await resp.json()
+      if (data.current) {
+        const c = data.current
+        const wmo = mapWMO(c.weather_code)
+        const weather = {
+          temp: Math.round(c.temperature_2m),
+          feelsLike: Math.round(c.apparent_temperature),
+          humidity: c.relative_humidity_2m,
+          windSpeed: Math.round(c.wind_speed_10m),
+          windDir: c.wind_direction_10m,
+          text: wmo.desc,
+          icon: wmo.icon,
+          type: wmo.type,
+          code: c.weather_code,
+        }
+        localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({ cacheKey, data: weather }))
+        localStorage.setItem(WEATHER_CACHE_TIME, Date.now().toString())
+        return weather
+      }
+    } catch {
+      continue
     }
-    return null
-  } catch {
-    return null
   }
+  return null
 }
 
 // 反向地理编码（经纬度 → 城市名）
