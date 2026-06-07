@@ -37,22 +37,33 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
     }
   }
 
-  // 右键菜单
-  const handleContextMenu = useCallback((e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setContextMenuPos({ x: e.clientX, y: e.clientY })
-    setShowContextMenu(true)
+  // 右键菜单 - 使用原生事件确保在捕获阶段处理
+  useEffect(() => {
+    const card = cardRef.current
+    if (!card) return
+
+    const handleContextMenu = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setContextMenuPos({ x: e.clientX, y: e.clientY })
+      setShowContextMenu(true)
+    }
+
+    // 使用捕获阶段，确保在全局监听器之前执行
+    card.addEventListener('contextmenu', handleContextMenu, true)
+    return () => card.removeEventListener('contextmenu', handleContextMenu, true)
   }, [])
 
   // 点击外部关闭右键菜单
   useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (e) => {
+      // 如果点击的是右键菜单本身，不关闭
+      if (e.target.closest(`.${styles.contextMenu}`)) return
       setShowContextMenu(false)
     }
     if (showContextMenu) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
+      document.addEventListener('click', handleClickOutside, true)
+      return () => document.removeEventListener('click', handleClickOutside, true)
     }
   }, [showContextMenu])
 
@@ -89,8 +100,8 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
       <div
         ref={cardRef}
         className={styles.card}
+        data-site-card="true"
         onClick={handleClick}
-        onContextMenu={handleContextMenu}
       >
         {isEditMode && (
           <div className={styles.dragHandle} {...dragHandleProps}>

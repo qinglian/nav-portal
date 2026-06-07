@@ -48,6 +48,21 @@ function AppContent() {
     localStorage.setItem('nav-current-view', 'nav')
   }
 
+  // 全局屏蔽默认右键菜单（允许自定义右键菜单）
+  useEffect(() => {
+    const handleContextMenu = (e) => {
+      // 如果点击的是 SiteCard（有 data-site-card 属性），允许自定义右键菜单
+      if (e.target.closest('[data-site-card]')) {
+        return // 不阻止，让 SiteCard 自己的 onContextMenu 处理
+      }
+      // 其他所有区域屏蔽默认右键菜单
+      e.preventDefault()
+    }
+    // 使用捕获阶段，确保在冒泡之前执行
+    document.addEventListener('contextmenu', handleContextMenu, true)
+    return () => document.removeEventListener('contextmenu', handleContextMenu, true)
+  }, [])
+
   // Apply background mode
   useEffect(() => {
     const body = document.body
