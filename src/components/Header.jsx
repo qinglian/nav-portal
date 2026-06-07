@@ -131,7 +131,7 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
                           const newVal = !weatherEnabled
                           setWeatherEnabled(newVal)
                           saveWeatherEnabled(newVal)
-                          window.dispatchEvent(new CustomEvent('weatherCityChanged'))
+                          window.dispatchEvent(new CustomEvent('weatherToggleChanged'))
                         }}
                       >
                         <span className={styles.configToggleThumb} />

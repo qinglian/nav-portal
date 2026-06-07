@@ -332,6 +332,15 @@ export default function TimeWidget() {
     return () => clearInterval(timer)
   }, [])
 
+  // 监听天气开关变化（从 Header 同步）
+  useEffect(() => {
+    const handler = () => {
+      setWeatherEnabled(getWeatherEnabled())
+    }
+    window.addEventListener('weatherToggleChanged', handler)
+    return () => window.removeEventListener('weatherToggleChanged', handler)
+  }, [])
+
   const loadWeather = useCallback(async () => {
     if (!weatherEnabled) return
     setWeatherLoading(true)
@@ -364,13 +373,24 @@ export default function TimeWidget() {
     setWeatherLoading(false)
   }, [weatherEnabled])
 
-  useEffect(() => { loadWeather() }, [loadWeather])
+  useEffect(() => {
+    if (weatherEnabled) {
+      loadWeather()
+    } else {
+      // 关闭天气时清除数据
+      setWeather(null)
+      setCityName('')
+      setWeatherError('')
+    }
+  }, [weatherEnabled, loadWeather])
 
   useEffect(() => {
-    const handler = () => loadWeather()
+    const handler = () => {
+      if (weatherEnabled) loadWeather()
+    }
     window.addEventListener('weatherCityChanged', handler)
     return () => window.removeEventListener('weatherCityChanged', handler)
-  }, [loadWeather])
+  }, [loadWeather, weatherEnabled])
 
   const formatDate = (date) => {
     const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
@@ -395,7 +415,7 @@ export default function TimeWidget() {
   const weatherType = weather?.type || 'sunny'
 
   const weatherBgClass = useMemo(() => {
-    if (!weatherEnabled) return ''
+    if (!weatherEnabled || !weather) return ''
     switch (weatherType) {
       case 'rain': return styles.weatherRain
       case 'snow': return styles.weatherSnow
@@ -405,7 +425,7 @@ export default function TimeWidget() {
       case 'sunny': return styles.weatherSunny
       default: return ''
     }
-  }, [weatherType, weatherEnabled])
+  }, [weatherType, weatherEnabled, weather])
 
   return (
     <div className={`${styles.widget} ${weatherBgClass}`}>
