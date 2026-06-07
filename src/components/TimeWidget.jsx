@@ -1,311 +1,313 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Calendar, Clock, MapPin } from 'lucide-react'
-import { fetchWeather, getSavedCity, getLocation, getLocationId, saveCity } from '../utils/weather'
+import { fetchWeather, getSavedCity, getLocation, reverseGeocode, saveCity, getWeatherEnabled, saveWeatherEnabled } from '../utils/weather'
 import styles from './TimeWidget.module.css'
 
-// 拟物化天气动画组件
+// ==================== 拟物化天气动画 ====================
 function WeatherEffect({ type }) {
   const canvasRef = useRef(null)
   const animRef = useRef(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas || !type) return
     const ctx = canvas.getContext('2d')
+    const dpr = window.devicePixelRatio || 1
 
     const resize = () => {
       const rect = canvas.parentElement.getBoundingClientRect()
-      canvas.width = rect.width * window.devicePixelRatio
-      canvas.height = rect.height * window.devicePixelRatio
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+      canvas.width = rect.width * dpr
+      canvas.height = rect.height * dpr
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
     resize()
-    window.addEventListener('resize', resize)
 
-    let particles = []
-    let sunRays = []
-    let clouds = []
-    let lightningTimer = 0
-    let lightningFlash = 0
+    const getSize = () => {
+      const rect = canvas.parentElement.getBoundingClientRect()
+      return { w: rect.width, h: rect.height }
+    }
 
-    const w = canvas.parentElement.getBoundingClientRect().width
-    const h = canvas.parentElement.getBoundingClientRect().height
+    let { w, h } = getSize()
+    let drops = [], flakes = [], sunAngle = 0, fogParts = [], cloudParts = []
+    let time = 0
 
-    // 初始化粒子
-    const init = () => {
-      particles = []
-      sunRays = []
-      clouds = []
-
-      if (type === 'rain') {
-        for (let i = 0; i < 100; i++) {
-          particles.push({
-            x: Math.random() * w,
-            y: Math.random() * h,
-            speed: 8 + Math.random() * 10,
-            length: 15 + Math.random() * 20,
-            width: 0.8 + Math.random() * 1.2,
-            opacity: 0.3 + Math.random() * 0.4,
-            wind: -2 + Math.random() * 1,
-          })
-        }
-      } else if (type === 'snow') {
-        for (let i = 0; i < 50; i++) {
-          particles.push({
-            x: Math.random() * w,
-            y: Math.random() * h,
-            speed: 0.8 + Math.random() * 2,
-            radius: 1.5 + Math.random() * 3,
-            opacity: 0.5 + Math.random() * 0.5,
-            wobble: Math.random() * Math.PI * 2,
-            wobbleSpeed: 0.015 + Math.random() * 0.025,
-          })
-        }
-      } else if (type === 'sunny') {
-        // 太阳光线
-        for (let i = 0; i < 12; i++) {
-          sunRays.push({
-            angle: (Math.PI * 2 / 12) * i,
-            length: 60 + Math.random() * 40,
-            width: 2 + Math.random() * 2,
-            opacity: 0.08 + Math.random() * 0.12,
-            speed: 0.002 + Math.random() * 0.003,
-          })
-        }
-        // 漂浮光点
-        for (let i = 0; i < 20; i++) {
-          particles.push({
-            x: Math.random() * w,
-            y: Math.random() * h,
-            radius: 1 + Math.random() * 3,
-            opacity: 0.15 + Math.random() * 0.25,
-            speedY: -0.3 - Math.random() * 0.5,
-            speedX: -0.2 + Math.random() * 0.4,
-          })
-        }
-      } else if (type === 'cloudy' || type === 'overcast') {
-        for (let i = 0; i < 5; i++) {
-          clouds.push({
-            x: Math.random() * w,
-            y: 20 + Math.random() * (h * 0.4),
-            width: 80 + Math.random() * 120,
-            height: 30 + Math.random() * 20,
-            speed: 0.2 + Math.random() * 0.3,
-            opacity: 0.08 + Math.random() * 0.12,
-          })
-        }
-      } else if (type === 'fog') {
-        for (let i = 0; i < 8; i++) {
-          particles.push({
-            x: Math.random() * w,
-            y: Math.random() * h,
-            width: 100 + Math.random() * 150,
-            height: 40 + Math.random() * 30,
-            speed: 0.2 + Math.random() * 0.4,
-            opacity: 0.06 + Math.random() * 0.08,
-          })
-        }
+    // ---- 初始化 ----
+    if (type === 'rain') {
+      for (let i = 0; i < 120; i++) {
+        drops.push(makeDrop(w, h, true))
+      }
+    } else if (type === 'snow') {
+      for (let i = 0; i < 60; i++) {
+        flakes.push(makeFlake(w, h, true))
+      }
+    } else if (type === 'sunny') {
+      for (let i = 0; i < 25; i++) {
+        fogParts.push({
+          x: Math.random() * w, y: Math.random() * h,
+          r: 1 + Math.random() * 2.5,
+          o: 0.1 + Math.random() * 0.2,
+          vy: -(0.15 + Math.random() * 0.35),
+          vx: (Math.random() - 0.5) * 0.3,
+        })
+      }
+    } else if (type === 'cloudy' || type === 'overcast') {
+      for (let i = 0; i < 4; i++) {
+        cloudParts.push({
+          x: Math.random() * w * 1.5 - w * 0.25,
+          y: h * 0.1 + Math.random() * h * 0.35,
+          rx: 50 + Math.random() * 70,
+          ry: 18 + Math.random() * 14,
+          speed: 0.15 + Math.random() * 0.25,
+          o: type === 'overcast' ? 0.12 + Math.random() * 0.1 : 0.06 + Math.random() * 0.06,
+        })
+      }
+    } else if (type === 'fog') {
+      for (let i = 0; i < 10; i++) {
+        fogParts.push({
+          x: Math.random() * w * 1.5 - w * 0.25,
+          y: Math.random() * h,
+          rx: 60 + Math.random() * 100,
+          ry: 25 + Math.random() * 20,
+          speed: 0.15 + Math.random() * 0.3,
+          o: 0.05 + Math.random() * 0.06,
+        })
       }
     }
 
-    init()
+    function makeDrop(w, h, init) {
+      return {
+        x: Math.random() * (w + 40) - 20,
+        y: init ? Math.random() * h : -Math.random() * 30,
+        speed: 10 + Math.random() * 8,
+        len: 18 + Math.random() * 16,
+        o: 0.25 + Math.random() * 0.35,
+        wind: -1.5 - Math.random(),
+      }
+    }
 
-    let frame = 0
+    function makeFlake(w, h, init) {
+      return {
+        x: Math.random() * w,
+        y: init ? Math.random() * h : -Math.random() * 20,
+        speed: 0.6 + Math.random() * 1.8,
+        r: 1.5 + Math.random() * 3.5,
+        o: 0.5 + Math.random() * 0.5,
+        wobble: Math.random() * Math.PI * 2,
+        ws: 0.01 + Math.random() * 0.02,
+        rot: Math.random() * Math.PI * 2,
+        rs: (Math.random() - 0.5) * 0.02,
+      }
+    }
+
+    // ---- 绘制 ----
     const draw = () => {
-      const displayW = canvas.parentElement.getBoundingClientRect().width
-      const displayH = canvas.parentElement.getBoundingClientRect().height
-      ctx.clearRect(0, 0, displayW, displayH)
+      const { w: cw, h: ch } = getSize()
+      if (cw !== w || ch !== h) { w = cw; h = ch }
+      ctx.clearRect(0, 0, w, h)
+      time += 0.016
 
       if (type === 'rain') {
-        // 雨滴
-        particles.forEach(p => {
+        // 雨滴 - 细长倾斜线条
+        drops.forEach(d => {
           ctx.beginPath()
-          ctx.moveTo(p.x, p.y)
-          ctx.lineTo(p.x + p.wind, p.y + p.length)
-          ctx.strokeStyle = `rgba(180, 200, 230, ${p.opacity})`
-          ctx.lineWidth = p.width
-          ctx.lineCap = 'round'
+          ctx.moveTo(d.x, d.y)
+          ctx.lineTo(d.x + d.wind * 1.5, d.y + d.len)
+          ctx.strokeStyle = `rgba(160, 190, 220, ${d.o})`
+          ctx.lineWidth = 1
           ctx.stroke()
 
-          p.x += p.wind
-          p.y += p.speed
-
-          // 落地溅起
-          if (p.y > displayH - 5) {
-            ctx.beginPath()
-            ctx.arc(p.x, displayH - 2, 2, 0, Math.PI, true)
-            ctx.strokeStyle = `rgba(180, 200, 230, ${p.opacity * 0.5})`
-            ctx.lineWidth = 0.5
-            ctx.stroke()
+          // 溅落水花
+          if (d.y + d.len > h) {
+            for (let i = 0; i < 3; i++) {
+              const sx = d.x + d.wind * 1.5 + (Math.random() - 0.5) * 6
+              const sy = h - 1
+              const sr = 1 + Math.random() * 1.5
+              ctx.beginPath()
+              ctx.arc(sx, sy, sr, Math.PI, 0)
+              ctx.strokeStyle = `rgba(160, 190, 220, ${d.o * 0.4})`
+              ctx.lineWidth = 0.5
+              ctx.stroke()
+            }
           }
 
-          if (p.y > displayH + 10) {
-            p.x = Math.random() * displayW
-            p.y = -p.length
-          }
+          d.x += d.wind
+          d.y += d.speed
+          if (d.y > h + 20) Object.assign(d, makeDrop(w, h, false))
         })
 
-        // 雷电效果（雷阵雨时）
-        lightningTimer++
-        if (lightningTimer > 200 + Math.random() * 300) {
-          lightningFlash = 8
-          lightningTimer = 0
-        }
-        if (lightningFlash > 0) {
-          ctx.fillStyle = `rgba(255, 255, 255, ${lightningFlash * 0.03})`
-          ctx.fillRect(0, 0, displayW, displayH)
-          lightningFlash--
-        }
+        // 底部水面反光
+        const waterGrad = ctx.createLinearGradient(0, h - 8, 0, h)
+        waterGrad.addColorStop(0, 'rgba(100, 140, 180, 0)')
+        waterGrad.addColorStop(1, 'rgba(100, 140, 180, 0.06)')
+        ctx.fillStyle = waterGrad
+        ctx.fillRect(0, h - 8, w, 8)
 
       } else if (type === 'snow') {
-        particles.forEach(p => {
-          p.wobble += p.wobbleSpeed
-          const x = p.x + Math.sin(p.wobble) * 2
+        flakes.forEach(f => {
+          f.wobble += f.ws
+          f.rot += f.rs
+          const x = f.x + Math.sin(f.wobble) * 2.5
 
-          // 雪花六边形
+          // 绘制精致雪花
           ctx.save()
-          ctx.translate(x, p.y)
-          ctx.rotate(p.wobble * 0.5)
-          ctx.beginPath()
-          for (let i = 0; i < 6; i++) {
-            const angle = (Math.PI / 3) * i
-            ctx.lineTo(Math.cos(angle) * p.radius, Math.sin(angle) * p.radius)
+          ctx.translate(x, f.y)
+          ctx.rotate(f.rot)
+          ctx.globalAlpha = f.o
+
+          if (f.r > 2.5) {
+            // 大雪花 - 六角形
+            for (let i = 0; i < 6; i++) {
+              const a = (Math.PI / 3) * i
+              ctx.beginPath()
+              ctx.moveTo(0, 0)
+              ctx.lineTo(Math.cos(a) * f.r, Math.sin(a) * f.r)
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'
+              ctx.lineWidth = 0.8
+              ctx.stroke()
+              // 小分支
+              const bx = Math.cos(a) * f.r * 0.6
+              const by = Math.sin(a) * f.r * 0.6
+              ctx.beginPath()
+              ctx.moveTo(bx, by)
+              ctx.lineTo(bx + Math.cos(a + 0.5) * f.r * 0.3, by + Math.sin(a + 0.5) * f.r * 0.3)
+              ctx.stroke()
+            }
+          } else {
+            // 小雪花 - 圆点
+            ctx.beginPath()
+            ctx.arc(0, 0, f.r, 0, Math.PI * 2)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+            ctx.fill()
           }
-          ctx.closePath()
-          ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`
-          ctx.fill()
+
+          ctx.globalAlpha = 1
           ctx.restore()
 
-          p.y += p.speed
-          if (p.y > displayH + 10) {
-            p.x = Math.random() * displayW
-            p.y = -10
-          }
+          f.y += f.speed
+          if (f.y > h + 15) Object.assign(f, makeFlake(w, h, false))
         })
+
+        // 底部积雪
+        const snowGrad = ctx.createLinearGradient(0, h - 6, 0, h)
+        snowGrad.addColorStop(0, 'rgba(220, 230, 240, 0)')
+        snowGrad.addColorStop(1, 'rgba(220, 230, 240, 0.08)')
+        ctx.fillStyle = snowGrad
+        ctx.fillRect(0, h - 6, w, 6)
 
       } else if (type === 'sunny') {
-        // 太阳光晕
-        const sunX = displayW * 0.85
-        const sunY = displayH * 0.25
+        const sx = w * 0.88
+        const sy = h * 0.2
 
-        // 外层光晕
-        const outerGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 80)
-        outerGlow.addColorStop(0, 'rgba(255, 220, 100, 0.15)')
-        outerGlow.addColorStop(0.5, 'rgba(255, 200, 80, 0.08)')
-        outerGlow.addColorStop(1, 'rgba(255, 180, 60, 0)')
-        ctx.fillStyle = outerGlow
-        ctx.fillRect(0, 0, displayW, displayH)
+        // 大范围光晕
+        const g1 = ctx.createRadialGradient(sx, sy, 0, sx, sy, Math.max(w, h) * 0.6)
+        g1.addColorStop(0, 'rgba(255, 210, 80, 0.1)')
+        g1.addColorStop(0.3, 'rgba(255, 200, 60, 0.04)')
+        g1.addColorStop(1, 'rgba(255, 180, 40, 0)')
+        ctx.fillStyle = g1
+        ctx.fillRect(0, 0, w, h)
 
         // 太阳本体
-        const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 30)
-        sunGlow.addColorStop(0, 'rgba(255, 230, 150, 0.6)')
-        sunGlow.addColorStop(0.4, 'rgba(255, 210, 100, 0.3)')
-        sunGlow.addColorStop(1, 'rgba(255, 200, 80, 0)')
-        ctx.fillStyle = sunGlow
+        const g2 = ctx.createRadialGradient(sx, sy, 0, sx, sy, 22)
+        g2.addColorStop(0, 'rgba(255, 240, 180, 0.7)')
+        g2.addColorStop(0.5, 'rgba(255, 220, 120, 0.35)')
+        g2.addColorStop(1, 'rgba(255, 200, 80, 0)')
+        ctx.fillStyle = g2
         ctx.beginPath()
-        ctx.arc(sunX, sunY, 30, 0, Math.PI * 2)
+        ctx.arc(sx, sy, 22, 0, Math.PI * 2)
         ctx.fill()
 
-        // 光线旋转
-        sunRays.forEach(ray => {
-          ray.angle += ray.speed
-          const startX = sunX + Math.cos(ray.angle) * 35
-          const startY = sunY + Math.sin(ray.angle) * 35
-          const endX = sunX + Math.cos(ray.angle) * ray.length
-          const endY = sunY + Math.sin(ray.angle) * ray.length
-
+        // 旋转光芒
+        sunAngle += 0.003
+        for (let i = 0; i < 8; i++) {
+          const a = sunAngle + (Math.PI * 2 / 8) * i
+          const inner = 24
+          const outer = 45 + Math.sin(time * 2 + i) * 10
           ctx.beginPath()
-          ctx.moveTo(startX, startY)
-          ctx.lineTo(endX, endY)
-          ctx.strokeStyle = `rgba(255, 220, 120, ${ray.opacity})`
-          ctx.lineWidth = ray.width
+          ctx.moveTo(sx + Math.cos(a) * inner, sy + Math.sin(a) * inner)
+          ctx.lineTo(sx + Math.cos(a) * outer, sy + Math.sin(a) * outer)
+          ctx.strokeStyle = `rgba(255, 220, 120, ${0.06 + Math.sin(time * 2 + i) * 0.03})`
+          ctx.lineWidth = 2.5
           ctx.lineCap = 'round'
           ctx.stroke()
-        })
+        }
 
-        // 漂浮光点
-        particles.forEach(p => {
+        // 漂浮光尘
+        fogParts.forEach(p => {
           ctx.beginPath()
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(255, 230, 150, ${p.opacity})`
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(255, 230, 150, ${p.o * (0.5 + 0.5 * Math.sin(time + p.x))})`
           ctx.fill()
-
-          p.y += p.speedY
-          p.x += p.speedX
-
-          if (p.y < -10) {
-            p.y = displayH + 10
-            p.x = Math.random() * displayW
-          }
-          if (p.x < -10) p.x = displayW + 10
-          if (p.x > displayW + 10) p.x = -10
+          p.y += p.vy
+          p.x += p.vx
+          if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w }
         })
 
       } else if (type === 'cloudy' || type === 'overcast') {
-        clouds.forEach(cloud => {
-          // 绘制云朵
+        cloudParts.forEach(c => {
+          ctx.save()
+          ctx.globalAlpha = c.o
+          // 柔和云朵 - 多个椭圆叠加
+          ctx.fillStyle = type === 'overcast' ? 'rgba(140, 150, 165, 1)' : 'rgba(210, 218, 230, 1)'
           ctx.beginPath()
-          const cx = cloud.x
-          const cy = cloud.y
-          const cw = cloud.width
-          const ch = cloud.height
-
-          ctx.ellipse(cx, cy, cw / 2, ch / 2, 0, 0, Math.PI * 2)
-          ctx.ellipse(cx - cw * 0.25, cy + ch * 0.1, cw * 0.35, ch * 0.45, 0, 0, Math.PI * 2)
-          ctx.ellipse(cx + cw * 0.25, cy + ch * 0.1, cw * 0.35, ch * 0.45, 0, 0, Math.PI * 2)
-          ctx.ellipse(cx, cy - ch * 0.15, cw * 0.3, ch * 0.35, 0, 0, Math.PI * 2)
-
-          ctx.fillStyle = `rgba(220, 225, 235, ${cloud.opacity})`
+          ctx.ellipse(c.x, c.y, c.rx, c.ry, 0, 0, Math.PI * 2)
           ctx.fill()
-
-          cloud.x += cloud.speed
-          if (cloud.x > displayW + cw) {
-            cloud.x = -cw
-          }
+          ctx.beginPath()
+          ctx.ellipse(c.x - c.rx * 0.3, c.y + c.ry * 0.15, c.rx * 0.6, c.ry * 0.8, 0, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.beginPath()
+          ctx.ellipse(c.x + c.rx * 0.3, c.y + c.ry * 0.1, c.rx * 0.55, c.ry * 0.75, 0, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.beginPath()
+          ctx.ellipse(c.x + c.rx * 0.1, c.y - c.ry * 0.3, c.rx * 0.45, c.ry * 0.6, 0, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.globalAlpha = 1
+          ctx.restore()
+          c.x += c.speed
+          if (c.x - c.rx > w) c.x = -c.rx * 2
         })
 
       } else if (type === 'fog') {
-        particles.forEach(p => {
-          const gradient = ctx.createRadialGradient(
-            p.x + p.width / 2, p.y, 0,
-            p.x + p.width / 2, p.y, p.width / 2
-          )
-          gradient.addColorStop(0, `rgba(200, 205, 210, ${p.opacity})`)
-          gradient.addColorStop(1, 'rgba(200, 205, 210, 0)')
-
-          ctx.fillStyle = gradient
+        fogParts.forEach(p => {
+          ctx.save()
+          ctx.globalAlpha = p.o * (0.7 + 0.3 * Math.sin(time * 0.5 + p.x * 0.01))
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.rx)
+          g.addColorStop(0, 'rgba(190, 195, 200, 1)')
+          g.addColorStop(1, 'rgba(190, 195, 200, 0)')
+          ctx.fillStyle = g
           ctx.beginPath()
-          ctx.ellipse(p.x + p.width / 2, p.y, p.width / 2, p.height / 2, 0, 0, Math.PI * 2)
+          ctx.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, Math.PI * 2)
           ctx.fill()
-
+          ctx.globalAlpha = 1
+          ctx.restore()
           p.x += p.speed
-          if (p.x > displayW + p.width) {
-            p.x = -p.width
-          }
+          if (p.x - p.rx > w) p.x = -p.rx * 2
         })
       }
 
-      frame++
       animRef.current = requestAnimationFrame(draw)
     }
 
+    const onResize = () => resize()
+    window.addEventListener('resize', onResize)
     draw()
 
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current)
-      window.removeEventListener('resize', resize)
+      window.removeEventListener('resize', onResize)
     }
   }, [type])
 
   return <canvas ref={canvasRef} className={styles.weatherCanvas} />
 }
 
+// ==================== 主组件 ====================
 export default function TimeWidget() {
   const [time, setTime] = useState(new Date())
   const [weather, setWeather] = useState(null)
-  const [weatherLoading, setWeatherLoading] = useState(true)
+  const [weatherLoading, setWeatherLoading] = useState(false)
   const [weatherError, setWeatherError] = useState('')
   const [cityName, setCityName] = useState('')
+  const [weatherEnabled, setWeatherEnabled] = useState(() => getWeatherEnabled())
 
   // 时间更新
   useEffect(() => {
@@ -314,89 +316,71 @@ export default function TimeWidget() {
   }, [])
 
   // 天气获取
-  useEffect(() => {
-    let mounted = true
-    const loadWeather = async () => {
-      setWeatherLoading(true)
-      setWeatherError('')
-      try {
-        const savedCity = getSavedCity()
-        if (savedCity) {
-          const cityData = JSON.parse(savedCity)
-          setCityName(cityData.name)
-          const w = await fetchWeather(cityData.id)
-          if (mounted) {
-            setWeather(w)
-            setWeatherError(w ? '' : '天气数据获取失败')
+  const loadWeather = useCallback(async () => {
+    if (!weatherEnabled) return
+    setWeatherLoading(true)
+    setWeatherError('')
+    try {
+      const saved = getSavedCity()
+      if (saved) {
+        setCityName(saved.name)
+        const w = await fetchWeather(saved.lat, saved.lon)
+        if (w) setWeather(w)
+        else setWeatherError('天气获取失败')
+      } else {
+        try {
+          const loc = await getLocation()
+          const geo = await reverseGeocode(loc.lat, loc.lon)
+          if (geo) {
+            setCityName(geo.name)
+            saveCity({ lat: loc.lat, lon: loc.lon, name: geo.name })
           }
-        } else {
-          try {
-            const loc = await getLocation()
-            const locData = await getLocationId(loc.lat, loc.lon)
-            if (locData && mounted) {
-              setCityName(locData.name)
-              saveCity(JSON.stringify({ id: locData.id, name: locData.name }))
-              const w = await fetchWeather(locData.id)
-              if (mounted) {
-                setWeather(w)
-                setWeatherError(w ? '' : '天气数据获取失败')
-              }
-            }
-          } catch {
-            if (mounted) {
-              setWeatherError('定位失败，请在网站配置中设置城市')
-            }
-          }
+          const w = await fetchWeather(loc.lat, loc.lon)
+          if (w) setWeather(w)
+          else setWeatherError('天气获取失败')
+        } catch {
+          setWeatherError('定位失败，请在网站配置中设置城市')
         }
-      } catch {
-        if (mounted) setWeatherError('天气获取失败')
       }
-      if (mounted) setWeatherLoading(false)
+    } catch {
+      setWeatherError('天气获取失败')
     }
-    loadWeather()
+    setWeatherLoading(false)
+  }, [weatherEnabled])
 
-    // 监听城市变更事件
-    const handleCityChange = () => loadWeather()
-    window.addEventListener('weatherCityChanged', handleCityChange)
-    return () => {
-      mounted = false
-      window.removeEventListener('weatherCityChanged', handleCityChange)
-    }
-  }, [])
+  useEffect(() => { loadWeather() }, [loadWeather])
+
+  // 监听城市变更
+  useEffect(() => {
+    const handler = () => loadWeather()
+    window.addEventListener('weatherCityChanged', handler)
+    return () => window.removeEventListener('weatherCityChanged', handler)
+  }, [loadWeather])
 
   const formatDate = (date) => {
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    const day = date.getDate()
     const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
-    const weekDay = weekDays[date.getDay()]
-    return `${year}年${month}月${day}日 ${weekDay}`
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${weekDays[date.getDay()]}`
   }
 
   const formatTime = (date) => {
-    return date.toLocaleTimeString('zh-CN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    })
+    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
   }
 
   const getGreeting = () => {
-    const hour = time.getHours()
-    if (hour < 6) return '夜深了，注意休息'
-    if (hour < 9) return '早上好'
-    if (hour < 12) return '上午好'
-    if (hour < 14) return '中午好'
-    if (hour < 18) return '下午好'
-    if (hour < 22) return '晚上好'
+    const h = time.getHours()
+    if (h < 6) return '夜深了，注意休息'
+    if (h < 9) return '早上好'
+    if (h < 12) return '上午好'
+    if (h < 14) return '中午好'
+    if (h < 18) return '下午好'
+    if (h < 22) return '晚上好'
     return '夜深了，注意休息'
   }
 
   const weatherType = weather?.type || 'sunny'
 
-  // 根据天气类型设置卡片背景
   const weatherBgClass = useMemo(() => {
+    if (!weatherEnabled) return ''
     switch (weatherType) {
       case 'rain': return styles.weatherRain
       case 'snow': return styles.weatherSnow
@@ -406,14 +390,12 @@ export default function TimeWidget() {
       case 'sunny': return styles.weatherSunny
       default: return ''
     }
-  }, [weatherType])
+  }, [weatherType, weatherEnabled])
 
   return (
     <div className={`${styles.widget} ${weatherBgClass}`}>
-      {/* 拟物化天气动画层 */}
-      <WeatherEffect type={weatherType} />
+      {weatherEnabled && <WeatherEffect type={weatherType} />}
 
-      {/* 内容层 */}
       <div className={styles.content}>
         <div className={styles.left}>
           <span className={styles.greeting}>{getGreeting()}</span>
@@ -424,10 +406,9 @@ export default function TimeWidget() {
         </div>
 
         <div className={styles.right}>
-          {/* 天气信息 */}
-          {weather && (
+          {weatherEnabled && weather && (
             <div className={styles.weatherInfo}>
-              <span className={styles.weatherEmoji}>{weather.emoji}</span>
+              <span className={styles.weatherEmoji}>{weather.icon}</span>
               <div className={styles.weatherDetail}>
                 <span className={styles.weatherTemp}>{weather.temp}°C</span>
                 <span className={styles.weatherText}>{weather.text}</span>
@@ -441,11 +422,11 @@ export default function TimeWidget() {
             </div>
           )}
 
-          {weatherLoading && (
+          {weatherEnabled && weatherLoading && (
             <div className={styles.weatherLoading}>天气加载中...</div>
           )}
 
-          {weatherError && !weather && (
+          {weatherEnabled && weatherError && !weather && (
             <div className={styles.weatherError}>{weatherError}</div>
           )}
 

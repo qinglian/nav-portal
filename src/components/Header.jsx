@@ -1,8 +1,8 @@
-import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon } from 'lucide-react'
+import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon, CloudSun } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import DataManager from './DataManager'
-import { getSavedCity, saveCity as saveWeatherCity, searchCity } from '../utils/weather'
+import { getSavedCity, saveCity as saveWeatherCity, searchCity, getWeatherEnabled, saveWeatherEnabled } from '../utils/weather'
 import styles from './Header.module.css'
 
 export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker, onLogoClick, siteStatusEnabled, onToggleSiteStatus }) {
@@ -11,6 +11,7 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
   const [citySearch, setCitySearch] = useState('')
   const [cityResults, setCityResults] = useState([])
   const [currentCity, setCurrentCity] = useState('')
+  const [weatherEnabled, setWeatherEnabled] = useState(() => getWeatherEnabled())
   const searchTimeoutRef = useRef(null)
 
   // 初始化城市
@@ -94,6 +95,30 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
                 <div className={styles.siteConfigMenu}>
                   <div className={styles.configTitle}>网站配置</div>
                   
+                  {/* 天气开关 */}
+                  <label className={styles.configRow}>
+                    <div className={styles.configLabel}>
+                      <CloudSun size={14} />
+                      <div>
+                        <span className={styles.configName}>天气显示</span>
+                        <span className={styles.configDesc}>在时间卡片中显示天气动画</span>
+                      </div>
+                    </div>
+                    <button
+                      className={`${styles.configToggle} ${weatherEnabled ? styles.configToggleOn : ''}`}
+                      onClick={() => {
+                        const newVal = !weatherEnabled
+                        setWeatherEnabled(newVal)
+                        saveWeatherEnabled(newVal)
+                        window.dispatchEvent(new CustomEvent('weatherCityChanged'))
+                      }}
+                    >
+                      <span className={styles.configToggleThumb} />
+                    </button>
+                  </label>
+
+                  <div className={styles.configDivider} />
+
                   <label className={styles.configRow}>
                     <div className={styles.configLabel}>
                       <Activity size={14} />
