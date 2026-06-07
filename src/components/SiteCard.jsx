@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Edit2, Trash2, GripVertical, Wifi, WifiOff } from 'lucide-react'
+import { Edit2, Trash2, GripVertical } from 'lucide-react'
 import { checkSiteStatus } from '../utils/siteStatus'
 import styles from './SiteCard.module.css'
 
@@ -23,19 +23,18 @@ function generateColor(url) {
 
 export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandleProps, onContextMenu }) {
   const [iconError, setIconError] = useState(false)
-  const [siteStatus, setSiteStatus] = useState(null) // null = 检测中, true = 在线, false = 离线
+  const [siteStatus, setSiteStatus] = useState(null)
   const [showStatus, setShowStatus] = useState(false)
   const cardRef = useRef(null)
   const faviconUrl = getFaviconUrl(site.url)
   const fallbackColor = generateColor(site.url)
 
-  // 检测网站状态
   useEffect(() => {
     let mounted = true
     const detect = async () => {
       const status = await checkSiteStatus(site.url)
       if (mounted) {
-        setSiteStatus(status.online)
+        setSiteStatus(status)
         setShowStatus(true)
       }
     }
@@ -49,7 +48,6 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
     }
   }
 
-  // 右键事件
   useEffect(() => {
     const card = cardRef.current
     if (!card) return
@@ -62,7 +60,8 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
     return () => card.removeEventListener('contextmenu', handleContextMenu)
   }, [site, onContextMenu])
 
-  const isOffline = siteStatus === false
+  const isOffline = siteStatus && siteStatus.online === false && !siteStatus.unknown
+  const isUnknown = siteStatus && siteStatus.unknown === true
 
   return (
     <div
@@ -70,13 +69,17 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
       className={`${styles.card} ${isOffline ? styles.cardOffline : ''}`}
       data-site-card="true"
       onClick={handleClick}
-      title={isOffline ? '该网站暂时无法访问' : site.url}
+      title={isOffline ? '该网站暂时无法访问' : isUnknown ? '状态未知（可能需要VPN）' : site.url}
     >
-      {/* 状态指示器 */}
+      {/* 状态小圆点 */}
       {showStatus && (
-        <div className={`${styles.statusIndicator} ${isOffline ? styles.statusOffline : styles.statusOnline}`}>
-          {isOffline ? <WifiOff size={10} /> : <Wifi size={10} />}
-        </div>
+        <div
+          className={`${styles.statusDot} ${
+            isOffline ? styles.statusDotOffline :
+            isUnknown ? styles.statusDotUnknown :
+            styles.statusDotOnline
+          }`}
+        />
       )}
 
       {isEditMode && (

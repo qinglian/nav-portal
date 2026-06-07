@@ -9,7 +9,6 @@ function getCache() {
     const cached = localStorage.getItem(STATUS_CACHE_KEY)
     if (!cached) return {}
     const data = JSON.parse(cached)
-    // 清理过期缓存
     const now = Date.now()
     const valid = {}
     for (const [url, item] of Object.entries(data)) {
@@ -31,34 +30,70 @@ function saveCache(cache) {
 // 检测单个网站状态
 export async function checkSiteStatus(url) {
   const cache = getCache()
-  
-  // 检查缓存
+
   if (cache[url]) {
     return cache[url].status
   }
 
-  // 使用多种方法检测
   const results = await Promise.allSettled([
     checkByImage(url),
     checkByFetch(url)
   ])
 
-  // 任一方法成功即认为在线
   const isOnline = results.some(r => r.status === 'fulfilled' && r.value === true)
-  
+
+  // 如果检测失败，标记为 unknown（可能是VPN/墙）
+  const hasError = results.every(r => r.status === 'fulfilled' && r.value === false)
+  const isUnknown = hasError && isVpnOrBlockedSite(url)
+
   const status = {
     online: isOnline,
+    unknown: isUnknown, // 无法确定（可能是VPN/墙）
     checkedAt: new Date().toISOString()
   }
 
-  // 更新缓存
-  cache[url] = {
-    status,
-    timestamp: Date.now()
-  }
+  cache[url] = { status, timestamp: Date.now() }
   saveCache(cache)
 
   return status
+}
+
+// 判断是否为可能需要VPN的网站
+function isVpnOrBlockedSite(url) {
+  const vpnPatterns = [
+    /github\.com/i,
+    /youtube\.com/i,
+    /google\.com/i,
+    /twitter\.com/i,
+    /x\.com/i,
+    /facebook\.com/i,
+    /instagram\.com/i,
+    /reddit\.com/i,
+    /discord\.com/i,
+    /telegram\.org/i,
+    /netflix\.com/i,
+    /spotify\.com/i,
+    /chatgpt\.com/i,
+    /openai\.com/i,
+    /claude\.ai/i,
+    /anthropic\.com/i,
+    /midjourney\.com/i,
+    /vercel\.com/i,
+    /stackoverflow\.com/i,
+    /npmjs\.com/i,
+    /dribbble\.com/i,
+    /behance\.net/i,
+    /unsplash\.com/i,
+    /pexels\.com/i,
+    /soundcloud\.com/i,
+    /twitch\.tv/i,
+    /medium\.com/i,
+    /notion\.so/i,
+    /figma\.com/i,
+    /canva\.com/i,
+    /dropbox\.com/i,
+  ]
+  return vpnPatterns.some(p => p.test(url))
 }
 
 // 方法1：通过加载网站 favicon 检测
@@ -66,21 +101,11 @@ function checkByImage(url) {
   return new Promise((resolve) => {
     try {
       const urlObj = new URL(url)
-      // 尝试加载网站的 favicon
       const img = new Image()
-      const timeout = setTimeout(() => {
-        resolve(false)
-      }, 8000)
+      const timeout = setTimeout(() => resolve(false), 8000)
 
-      img.onload = () => {
-        clearTimeout(timeout)
-        resolve(true)
-      }
-      img.onerror = () => {
-        clearTimeout(timeout)
-        resolve(false)
-      }
-      // 使用 Google 的 favicon 服务作为代理检测
+      img.onload = () => { clearTimeout(timeout); resolve(true) }
+      img.onerror = () => { clearTimeout(timeout); resolve(false) }
       img.src = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=16&_t=${Date.now()}`
     } catch {
       resolve(false)
@@ -88,14 +113,11 @@ function checkByImage(url) {
   })
 }
 
-// 方法2：通过 fetch 检测（使用 no-cors 模式）
+// 方法2：通过 fetch 检测
 function checkByFetch(url) {
   return new Promise((resolve) => {
     const controller = new AbortController()
-    const timeout = setTimeout(() => {
-      controller.abort()
-      resolve(false)
-    }, 8000)
+    const timeout = setTimeout(() => { controller.abort(); resolve(false) }, 8000)
 
     fetch(url, {
       method: 'HEAD',
@@ -103,29 +125,21 @@ function checkByFetch(url) {
       signal: controller.signal,
       cache: 'no-store'
     })
-      .then(() => {
-        clearTimeout(timeout)
-        resolve(true)
-      })
-      .catch(() => {
-        clearTimeout(timeout)
-        resolve(false)
-      })
+      .then(() => { clearTimeout(timeout); resolve(true) })
+      .catch(() => { clearTimeout(timeout); resolve(false) })
   })
 }
 
-// 批量检测所有网站
+// 批量检测
 export async function checkAllSites(sites) {
   const cache = getCache()
   const now = Date.now()
-  
-  // 筛选需要检测的网站（缓存过期或未缓存）
+
   const needCheck = sites.filter(site => {
     const cached = cache[site.url]
     return !cached || (now - cached.timestamp >= STATUS_CACHE_DURATION)
   })
 
-  // 并发检测，限制并发数
   const batchSize = 5
   const results = {}
 
@@ -137,12 +151,9 @@ export async function checkAllSites(sites) {
         return { url: site.url, status }
       })
     )
-    batchResults.forEach(r => {
-      results[r.url] = r.status
-    })
+    batchResults.forEach(r => { results[r.url] = r.status })
   }
 
-  // 合并缓存结果
   for (const site of sites) {
     if (!results[site.url] && cache[site.url]) {
       results[site.url] = cache[site.url].status
@@ -152,7 +163,6 @@ export async function checkAllSites(sites) {
   return results
 }
 
-// 清除缓存
 export function clearStatusCache() {
   localStorage.removeItem(STATUS_CACHE_KEY)
 }
