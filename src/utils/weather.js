@@ -155,24 +155,52 @@ export async function fetchWeather(lat, lon) {
   }
 }
 
-// 反向地理编码（经纬度 → 城市名，使用 Open-Meteo 搜索最近城市）
+// 反向地理编码：通过搜索附近城市来推断城市名
 export async function reverseGeocode(lat, lon) {
   try {
-    // 通过搜索附近已知城市来获取名称
-    const resp = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=&count=1&language=zh&format=json`
-    )
-    // Open-Meteo 没有反向地理编码，使用 Nominatim（免费）
-    const resp2 = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh&zoom=10`
-    )
-    const data = await resp2.json()
-    if (data.address) {
-      const city = data.address.city || data.address.town || data.address.county || data.address.state || ''
-      return { name: city || '当前位置', admin1: data.address.country || '' }
+    // 尝试搜索附近城市（用空搜索不行，用经纬度附近的已知城市）
+    // 先尝试用中文城市名搜索常见城市列表
+    const majorCities = [
+      { name: '北京', lat: 39.9042, lon: 116.4074 },
+      { name: '上海', lat: 31.2304, lon: 121.4737 },
+      { name: '广州', lat: 23.1291, lon: 113.2644 },
+      { name: '深圳', lat: 22.5431, lon: 114.0579 },
+      { name: '成都', lat: 30.5728, lon: 104.0668 },
+      { name: '杭州', lat: 30.2741, lon: 120.1551 },
+      { name: '武汉', lat: 30.5928, lon: 114.3055 },
+      { name: '西安', lat: 34.3416, lon: 108.9398 },
+      { name: '重庆', lat: 29.5630, lon: 106.5516 },
+      { name: '南京', lat: 32.0603, lon: 118.7969 },
+      { name: '天津', lat: 39.0842, lon: 117.2009 },
+      { name: '苏州', lat: 31.2989, lon: 120.5853 },
+      { name: '郑州', lat: 34.7466, lon: 113.6253 },
+      { name: '长沙', lat: 28.2280, lon: 112.9388 },
+      { name: '沈阳', lat: 41.8057, lon: 123.4315 },
+      { name: '青岛', lat: 36.0671, lon: 120.3826 },
+      { name: '宁波', lat: 29.8683, lon: 121.5440 },
+      { name: '东莞', lat: 23.0489, lon: 113.7447 },
+      { name: '佛山', lat: 23.0218, lon: 113.1219 },
+      { name: '合肥', lat: 31.8206, lon: 117.2272 },
+    ]
+    
+    // 找最近的城市
+    let nearest = null
+    let minDist = Infinity
+    for (const city of majorCities) {
+      const dist = Math.sqrt(Math.pow(city.lat - lat, 2) + Math.pow(city.lon - lon, 2))
+      if (dist < minDist) {
+        minDist = dist
+        nearest = city
+      }
     }
-    return { name: '当前位置', admin1: '' }
+    
+    // 如果距离小于2度（约200公里），认为是该城市
+    if (nearest && minDist < 2) {
+      return { name: nearest.name, admin1: '' }
+    }
+    
+    return { name: '未知位置', admin1: '' }
   } catch {
-    return { name: '当前位置', admin1: '' }
+    return { name: '未知位置', admin1: '' }
   }
 }
