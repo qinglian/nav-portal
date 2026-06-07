@@ -124,24 +124,24 @@
 
 .flipCard {
   position: relative;
-  width: 36px;
-  height: 44px;
+  width: 40px;
+  height: 48px;
   perspective: 200px;
 }
 
-.flipCard span {
+/* 数字文字基础样式 */
+.flipNumber {
   display: block;
   width: 100%;
   text-align: center;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  line-height: 22px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-/* 上半部分 */
+/* 上半部分 - 显示数字上半 */
 .flipTop,
 .flipTopBack {
   position: absolute;
@@ -150,25 +150,26 @@
   width: 100%;
   height: 50%;
   overflow: hidden;
-  background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
-  border-radius: 4px 4px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  background: linear-gradient(180deg, #4a4a5a 0%, #3a3a4a 100%);
+  border-radius: 6px 6px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
   backface-visibility: hidden;
   transform-origin: bottom;
 }
 
-.flipTop span,
-.flipTopBack span {
+/* 上半部分文字 - 只显示上半 */
+.flipTop .flipNumber,
+.flipTopBack .flipNumber {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 44px;
-  line-height: 44px;
+  height: 48px;
+  line-height: 48px;
 }
 
-/* 下半部分 */
+/* 下半部分 - 显示数字下半 */
 .flipBottom,
 .flipBottomBack {
   position: absolute;
@@ -177,22 +178,23 @@
   width: 100%;
   height: 50%;
   overflow: hidden;
-  background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
-  border-radius: 0 0 4px 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+  border-radius: 0 0 6px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-top: none;
   backface-visibility: hidden;
   transform-origin: top;
 }
 
-.flipBottom span,
-.flipBottomBack span {
+/* 下半部分文字 - 只显示下半 */
+.flipBottom .flipNumber,
+.flipBottomBack .flipNumber {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 44px;
-  line-height: 44px;
+  height: 48px;
+  line-height: 48px;
 }
 
 /* 翻转动画 */
@@ -233,11 +235,11 @@
 }
 
 .flipSeparator {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 300;
-  color: var(--text-secondary);
-  margin-top: -8px;
-  opacity: 0.5;
+  color: var(--text-primary);
+  margin-top: -4px;
+  opacity: 0.6;
 }
 
 /* ==================== 右侧：天气 ==================== */
@@ -327,26 +329,27 @@
   }
 
   .flipCard {
-    width: 28px;
-    height: 36px;
+    width: 32px;
+    height: 40px;
   }
 
-  .flipCard span {
-    font-size: 18px;
-    line-height: 18px;
+  .flipNumber {
+    font-size: 20px;
+    height: 40px;
+    line-height: 40px;
   }
 
-  .flipTop span,
-  .flipTopBack span,
-  .flipBottom span,
-  .flipBottomBack span {
-    height: 36px;
-    line-height: 36px;
+  .flipTop .flipNumber,
+  .flipTopBack .flipNumber,
+  .flipBottom .flipNumber,
+  .flipBottomBack .flipNumber {
+    height: 40px;
+    line-height: 40px;
   }
 
   .flipSeparator {
-    font-size: 16px;
-    margin-top: -6px;
+    font-size: 18px;
+    margin-top: -2px;
   }
 
   .weatherEmoji {
