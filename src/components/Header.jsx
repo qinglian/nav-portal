@@ -1,4 +1,4 @@
-import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon, CloudSun } from 'lucide-react'
+import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import DataManager from './DataManager'
@@ -94,30 +94,6 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
               {showSiteConfig && (
                 <div className={styles.siteConfigMenu}>
                   <div className={styles.configTitle}>网站配置</div>
-                  
-                  {/* 天气开关 */}
-                  <label className={styles.configRow}>
-                    <div className={styles.configLabel}>
-                      <CloudSun size={14} />
-                      <div>
-                        <span className={styles.configName}>天气显示</span>
-                        <span className={styles.configDesc}>在时间卡片中显示天气动画</span>
-                      </div>
-                    </div>
-                    <button
-                      className={`${styles.configToggle} ${weatherEnabled ? styles.configToggleOn : ''}`}
-                      onClick={() => {
-                        const newVal = !weatherEnabled
-                        setWeatherEnabled(newVal)
-                        saveWeatherEnabled(newVal)
-                        window.dispatchEvent(new CustomEvent('weatherCityChanged'))
-                      }}
-                    >
-                      <span className={styles.configToggleThumb} />
-                    </button>
-                  </label>
-
-                  <div className={styles.configDivider} />
 
                   <label className={styles.configRow}>
                     <div className={styles.configLabel}>
@@ -137,16 +113,29 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
 
                   <div className={styles.configDivider} />
 
-                  {/* 天气城市设置 */}
+                  {/* 天气城市 + 开关 */}
                   <div className={styles.configSection}>
-                    <div className={styles.configLabel}>
-                      <MapPin size={14} />
-                      <div>
-                        <span className={styles.configName}>天气城市</span>
-                        <span className={styles.configDesc}>
-                          {currentCity ? `当前: ${currentCity}` : '自动定位'}
-                        </span>
+                    <div className={styles.configRow}>
+                      <div className={styles.configLabel}>
+                        <MapPin size={14} />
+                        <div>
+                          <span className={styles.configName}>天气城市</span>
+                          <span className={styles.configDesc}>
+                            {currentCity ? `当前: ${currentCity}` : '自动定位'}
+                          </span>
+                        </div>
                       </div>
+                      <button
+                        className={`${styles.configToggle} ${weatherEnabled ? styles.configToggleOn : ''}`}
+                        onClick={() => {
+                          const newVal = !weatherEnabled
+                          setWeatherEnabled(newVal)
+                          saveWeatherEnabled(newVal)
+                          window.dispatchEvent(new CustomEvent('weatherCityChanged'))
+                        }}
+                      >
+                        <span className={styles.configToggleThumb} />
+                      </button>
                     </div>
                     <div className={styles.citySearchBox}>
                       <SearchIcon size={12} className={styles.citySearchIcon} />
@@ -168,7 +157,7 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
                             onClick={(e) => { e.stopPropagation(); handleSelectCity(city) }}
                           >
                             <span className={styles.cityResultName}>{city.name}</span>
-                            <span className={styles.cityResultAdm}>{city.adm1} {city.adm2}</span>
+                            <span className={styles.cityResultAdm}>{city.admin1} {city.country}</span>
                           </button>
                         ))}
                       </div>
