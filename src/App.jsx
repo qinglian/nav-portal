@@ -10,7 +10,6 @@ import AnimatedBackground from './components/AnimatedBackground'
 import WallpaperPicker from './components/WallpaperPicker'
 import EffectPicker from './components/EffectPicker'
 import StartPage from './components/StartPage'
-import CloudBackup from './components/CloudBackup'
 import { Plus } from 'lucide-react'
 import styles from './App.module.css'
 
@@ -241,9 +240,6 @@ function AppContent() {
           )}
         </div>
       </main>
-
-      {/* 云备份 */}
-      <CloudBackup />
 
       <footer className={styles.footer}>
         <p>© 2024 清炼导航 · QingLian</p>
