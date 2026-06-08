@@ -69,7 +69,7 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
   }
 
   const handleSelectCity = (city) => {
-    saveWeatherCity(JSON.stringify({ id: city.id, name: city.name, lat: city.lat, lon: city.lon }))
+    saveWeatherCity({ id: city.id, name: city.name, lat: city.lat, lon: city.lon })
     setCurrentCity(city.name)
     setCitySearch('')
     setCityResults([])

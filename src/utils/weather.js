@@ -155,38 +155,84 @@ export async function fetchWeather(lat, lon) {
   }
 }
 
+// 中国主要城市列表（用于反向地理编码匹配）
+const CHINA_CITIES = [
+  // 直辖市
+  { name: '北京', lat: 39.9042, lon: 116.4074 },
+  { name: '上海', lat: 31.2304, lon: 121.4737 },
+  { name: '天津', lat: 39.0842, lon: 117.2009 },
+  { name: '重庆', lat: 29.5630, lon: 106.5516 },
+  // 省会城市/副省级
+  { name: '广州', lat: 23.1291, lon: 113.2644 },
+  { name: '深圳', lat: 22.5431, lon: 114.0579 },
+  { name: '成都', lat: 30.5728, lon: 104.0668 },
+  { name: '杭州', lat: 30.2741, lon: 120.1551 },
+  { name: '武汉', lat: 30.5928, lon: 114.3055 },
+  { name: '西安', lat: 34.3416, lon: 108.9398 },
+  { name: '南京', lat: 32.0603, lon: 118.7969 },
+  { name: '苏州', lat: 31.2989, lon: 120.5853 },
+  { name: '郑州', lat: 34.7466, lon: 113.6253 },
+  { name: '长沙', lat: 28.2280, lon: 112.9388 },
+  { name: '沈阳', lat: 41.8057, lon: 123.4315 },
+  { name: '青岛', lat: 36.0671, lon: 120.3826 },
+  { name: '宁波', lat: 29.8683, lon: 121.5440 },
+  { name: '东莞', lat: 23.0489, lon: 113.7447 },
+  { name: '佛山', lat: 23.0218, lon: 113.1219 },
+  { name: '合肥', lat: 31.8206, lon: 117.2272 },
+  { name: '昆明', lat: 25.0389, lon: 102.7183 },
+  { name: '石家庄', lat: 38.0428, lon: 114.5149 },
+  { name: '哈尔滨', lat: 45.8038, lon: 126.5350 },
+  { name: '济南', lat: 36.6512, lon: 117.1201 },
+  { name: '长春', lat: 43.8171, lon: 125.3235 },
+  { name: '福州', lat: 26.0745, lon: 119.2965 },
+  { name: '厦门', lat: 24.4798, lon: 118.0894 },
+  { name: '大连', lat: 38.9140, lon: 121.6147 },
+  { name: '南宁', lat: 22.8170, lon: 108.3665 },
+  { name: '太原', lat: 37.8706, lon: 112.5489 },
+  { name: '南昌', lat: 28.6820, lon: 115.8579 },
+  { name: '贵阳', lat: 26.6470, lon: 106.6302 },
+  { name: '兰州', lat: 36.0611, lon: 103.8343 },
+  { name: '海口', lat: 20.0440, lon: 110.1999 },
+  { name: '乌鲁木齐', lat: 43.8256, lon: 87.6168 },
+  { name: '呼和浩特', lat: 40.8414, lon: 111.7519 },
+  { name: '银川', lat: 38.4872, lon: 106.2309 },
+  { name: '西宁', lat: 36.6171, lon: 101.7782 },
+  { name: '拉萨', lat: 29.6500, lon: 91.1000 },
+  { name: '无锡', lat: 31.4912, lon: 120.3119 },
+  { name: '温州', lat: 28.0008, lon: 120.7019 },
+  { name: '常州', lat: 31.8107, lon: 119.9741 },
+  { name: '南通', lat: 31.9802, lon: 120.8943 },
+  { name: '徐州', lat: 34.2058, lon: 117.2841 },
+  { name: '绍兴', lat: 30.0300, lon: 120.5802 },
+  { name: '嘉兴', lat: 30.7460, lon: 120.7555 },
+  { name: '台州', lat: 28.6564, lon: 121.4208 },
+  { name: '金华', lat: 29.0791, lon: 119.6424 },
+  { name: '珠海', lat: 22.2710, lon: 113.5670 },
+  { name: '惠州', lat: 23.1115, lon: 114.4152 },
+  { name: '中山', lat: 22.5176, lon: 113.3927 },
+  { name: '烟台', lat: 37.4638, lon: 121.4481 },
+  { name: '威海', lat: 37.5091, lon: 122.1206 },
+  { name: '泉州', lat: 24.8744, lon: 118.6757 },
+  { name: '唐山', lat: 39.6292, lon: 118.1802 },
+  { name: '保定', lat: 38.8739, lon: 115.4646 },
+  { name: '洛阳', lat: 34.6197, lon: 112.4540 },
+  { name: '襄阳', lat: 32.0090, lon: 112.1225 },
+  { name: '宜昌', lat: 30.6920, lon: 111.2865 },
+  { name: '岳阳', lat: 29.3571, lon: 113.1292 },
+  { name: '桂林', lat: 25.2740, lon: 110.2993 },
+  { name: '三亚', lat: 18.2528, lon: 109.5120 },
+  { name: '香港', lat: 22.3193, lon: 114.1694 },
+  { name: '澳门', lat: 22.1987, lon: 113.5439 },
+  { name: '台北', lat: 25.0330, lon: 121.5654 },
+]
+
 // 反向地理编码：通过搜索附近城市来推断城市名
 export async function reverseGeocode(lat, lon) {
   try {
-    // 尝试搜索附近城市（用空搜索不行，用经纬度附近的已知城市）
-    // 先尝试用中文城市名搜索常见城市列表
-    const majorCities = [
-      { name: '北京', lat: 39.9042, lon: 116.4074 },
-      { name: '上海', lat: 31.2304, lon: 121.4737 },
-      { name: '广州', lat: 23.1291, lon: 113.2644 },
-      { name: '深圳', lat: 22.5431, lon: 114.0579 },
-      { name: '成都', lat: 30.5728, lon: 104.0668 },
-      { name: '杭州', lat: 30.2741, lon: 120.1551 },
-      { name: '武汉', lat: 30.5928, lon: 114.3055 },
-      { name: '西安', lat: 34.3416, lon: 108.9398 },
-      { name: '重庆', lat: 29.5630, lon: 106.5516 },
-      { name: '南京', lat: 32.0603, lon: 118.7969 },
-      { name: '天津', lat: 39.0842, lon: 117.2009 },
-      { name: '苏州', lat: 31.2989, lon: 120.5853 },
-      { name: '郑州', lat: 34.7466, lon: 113.6253 },
-      { name: '长沙', lat: 28.2280, lon: 112.9388 },
-      { name: '沈阳', lat: 41.8057, lon: 123.4315 },
-      { name: '青岛', lat: 36.0671, lon: 120.3826 },
-      { name: '宁波', lat: 29.8683, lon: 121.5440 },
-      { name: '东莞', lat: 23.0489, lon: 113.7447 },
-      { name: '佛山', lat: 23.0218, lon: 113.1219 },
-      { name: '合肥', lat: 31.8206, lon: 117.2272 },
-    ]
-    
     // 找最近的城市
     let nearest = null
     let minDist = Infinity
-    for (const city of majorCities) {
+    for (const city of CHINA_CITIES) {
       const dist = Math.sqrt(Math.pow(city.lat - lat, 2) + Math.pow(city.lon - lon, 2))
       if (dist < minDist) {
         minDist = dist
@@ -194,8 +240,8 @@ export async function reverseGeocode(lat, lon) {
       }
     }
     
-    // 如果距离小于2度（约200公里），认为是该城市
-    if (nearest && minDist < 2) {
+    // 如果距离小于2.5度（约250公里），认为是该城市
+    if (nearest && minDist < 2.5) {
       return { name: nearest.name, admin1: '' }
     }
     
