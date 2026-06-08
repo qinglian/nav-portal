@@ -89,7 +89,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  gap: 40px;
   width: 100%;
   padding: 0;
   box-sizing: border-box;
@@ -98,7 +98,7 @@
 /* 问候语 */
 .greeting {
   font-size: 18px;
-  font-weight: 400;
+  font-weight: 500;
   color: rgba(0, 0, 0, 0.35);
   letter-spacing: 4px;
   text-transform: uppercase;
@@ -129,7 +129,7 @@
 .timeHour,
 .timeMinute {
   font-size: 108px;
-  font-weight: 100;
+  font-weight: 500;
   color: rgba(0, 0, 0, 0.82);
   letter-spacing: -6px;
   font-variant-numeric: tabular-nums;
@@ -138,21 +138,15 @@
 
 .timeColon {
   font-size: 90px;
-  font-weight: 100;
+  font-weight: 500;
   color: rgba(0, 0, 0, 0.3);
   margin: 0 2px;
-  animation: blink 1s step-end infinite;
   font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
 }
 
 .timeSecond {
   font-size: 36px;
-  font-weight: 200;
+  font-weight: 500;
   color: rgba(0, 0, 0, 0.25);
   margin-left: 6px;
   font-variant-numeric: tabular-nums;
@@ -165,7 +159,7 @@
   gap: 10px;
   font-size: 15px;
   color: rgba(0, 0, 0, 0.35);
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 1px;
   font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
@@ -444,6 +438,7 @@
 .hint {
   font-size: 12px;
   color: rgba(0, 0, 0, 0.2);
+  font-weight: 500;
   letter-spacing: 0.5px;
   animation: slideUp 0.6s ease 0.3s both;
 }

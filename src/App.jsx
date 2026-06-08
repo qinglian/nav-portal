@@ -4,6 +4,7 @@ import { DataProvider, useData } from './context/DataContext'
 import Header from './components/Header'
 import TimeWidget from './components/TimeWidget'
 import SearchEnginePicker from './components/SearchEnginePicker'
+import QuickAccess from './components/QuickAccess'
 import CategorySection from './components/CategorySection'
 import EditModal from './components/EditModal'
 import AnimatedBackground from './components/AnimatedBackground'
@@ -13,6 +14,8 @@ import StartPage from './components/StartPage'
 import ContextMenu from './components/ContextMenu'
 import QRCode from 'qrcode'
 import { Plus, X } from 'lucide-react'
+import { recordSiteClick, addPinnedSite, removePinnedSite } from './utils/quickAccess'
+import { getQuickAccessEnabled } from './utils/quickAccess'
 import styles from './App.module.css'
 
 function AppContent() {
@@ -28,6 +31,7 @@ function AppContent() {
   const [siteStatusEnabled, setSiteStatusEnabled] = useState(() => localStorage.getItem('nav-site-status') !== 'false')
   const [bgEffect, setBgEffect] = useState(() => localStorage.getItem('nav-bg-effect') || 'particles')
   const [showEffectPicker, setShowEffectPicker] = useState(false)
+  const [quickAccessEnabled, setQuickAccessEnabled] = useState(() => getQuickAccessEnabled())
   const [modalState, setModalState] = useState({
     isOpen: false,
     mode: null,
@@ -35,6 +39,13 @@ function AppContent() {
     categoryId: null,
     categoryTags: []
   })
+
+  // 监听快捷入口开关变化
+  useEffect(() => {
+    const handler = () => setQuickAccessEnabled(getQuickAccessEnabled())
+    window.addEventListener('quickAccessToggleChanged', handler)
+    return () => window.removeEventListener('quickAccessToggleChanged', handler)
+  }, [])
 
   // 视图切换：'start' 起始页 | 'nav' 导航页
   const [currentView, setCurrentView] = useState(() => {
@@ -234,6 +245,16 @@ function AppContent() {
         <div className={styles.content}>
           {!searchQuery && <TimeWidget />}
           {!searchQuery && <SearchEnginePicker isEditMode={isEditMode} />}
+          {!searchQuery && quickAccessEnabled && (
+            <QuickAccess
+              isEditMode={isEditMode}
+              allCategories={data.categories}
+              onSiteContextMenu={(e, site) => {
+                setContextMenu({ visible: true, x: e.clientX, y: e.clientY, site })
+              }}
+              siteStatusEnabled={siteStatusEnabled}
+            />
+          )}
           {isEditMode && !searchQuery && (
             <button onClick={openAddCategoryModal} className={styles.addCategoryBtn}>
               <Plus size={18} />
@@ -303,6 +324,17 @@ function AppContent() {
             } catch (err) {
               console.error('QR生成失败:', err)
             }
+          } else if (action === 'pin' && contextMenu.site) {
+            const site = contextMenu.site
+            const { isPinned } = await import('./utils/quickAccess')
+            if (isPinned(site.url)) {
+              const { removePinnedSite } = await import('./utils/quickAccess')
+              removePinnedSite(site.url)
+            } else {
+              const { addPinnedSite } = await import('./utils/quickAccess')
+              addPinnedSite(site)
+            }
+            window.dispatchEvent(new CustomEvent('quickAccessPinnedChanged'))
           }
           setContextMenu({ ...contextMenu, visible: false })
         }}

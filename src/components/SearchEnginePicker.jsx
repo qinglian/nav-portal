@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Globe, Plus, X, Search, Check } from 'lucide-react'
+import { getSafeBoxEnabled, verifySafeBoxPassword } from '../utils/safeBox'
+import SafeBox from './SafeBox'
 import styles from './SearchEnginePicker.module.css'
 
 const DEFAULT_ENGINES = [
@@ -23,6 +26,7 @@ export default function SearchEnginePicker({ isEditMode }) {
   const [showAdd, setShowAdd] = useState(false)
   const [newName, setNewName] = useState('')
   const [newUrl, setNewUrl] = useState('')
+  const [showSafeBox, setShowSafeBox] = useState(false)
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -32,10 +36,35 @@ export default function SearchEnginePicker({ isEditMode }) {
   }, [showAdd])
 
   const handleSearch = () => {
-    if (!searchInput.trim()) return
+    const query = searchInput.trim()
+    if (!query) return
+
+    // 检测保险箱密码
+    if (getSafeBoxEnabled() && verifySafeBoxPassword(query)) {
+      setShowSafeBox(true)
+      setSearchInput('')
+      return
+    }
+
+    // 忘记密码：输入当前时间年月日时分（如 202606081637）
+    if (getSafeBoxEnabled()) {
+      const now = new Date()
+      const timeCode =
+        String(now.getFullYear()) +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        String(now.getDate()).padStart(2, '0') +
+        String(now.getHours()).padStart(2, '0') +
+        String(now.getMinutes()).padStart(2, '0')
+      if (query === timeCode) {
+        setShowSafeBox(true)
+        setSearchInput('')
+        return
+      }
+    }
+
     const engine = engines.find(en => en.id === currentEngine)
     if (engine) {
-      window.open(engine.url + encodeURIComponent(searchInput.trim()), '_blank')
+      window.open(engine.url + encodeURIComponent(query), '_blank')
     }
   }
 
@@ -159,6 +188,9 @@ export default function SearchEnginePicker({ isEditMode }) {
           <span>搜索</span>
         </button>
       </div>
+
+      {/* 保险箱弹窗 - Portal渲染到body */}
+      {showSafeBox && createPortal(<SafeBox onClose={() => setShowSafeBox(false)} />, document.body)}
     </div>
   )
 }

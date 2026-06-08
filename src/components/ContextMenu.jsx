@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { QrCode } from 'lucide-react'
+import { QrCode, Pin, PinOff } from 'lucide-react'
+import { isPinned } from '../utils/quickAccess'
 import styles from './ContextMenu.module.css'
 
 // 全局右键菜单组件 - 使用 createPortal 挂载到 body
 export default function ContextMenu({ visible, x, y, site, onAction, onClose }) {
+  const [pinned, setPinned] = useState(false)
+
+  useEffect(() => {
+    if (site) {
+      setPinned(isPinned(site.url))
+    }
+  }, [site])
   const menuRef = useRef(null)
   const [position, setPosition] = useState({ x, y })
 
@@ -52,6 +60,10 @@ export default function ContextMenu({ visible, x, y, site, onAction, onClose }) 
       className={styles.contextMenu}
       style={{ left: position.x, top: position.y }}
     >
+      <button className={styles.contextMenuItem} onClick={() => onAction('pin')}>
+        {pinned ? <PinOff size={14} /> : <Pin size={14} />}
+        <span>{pinned ? '取消置顶' : '置顶到快捷入口'}</span>
+      </button>
       <button className={styles.contextMenuItem} onClick={() => onAction('qr')}>
         <QrCode size={14} />
         <span>二维码分享</span>

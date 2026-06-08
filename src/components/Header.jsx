@@ -1,8 +1,10 @@
-import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon } from 'lucide-react'
+import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon, Zap, Lock } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import DataManager from './DataManager'
 import { getSavedCity, saveCity as saveWeatherCity, searchCity, getWeatherEnabled, saveWeatherEnabled } from '../utils/weather'
+import { getQuickAccessEnabled, saveQuickAccessEnabled } from '../utils/quickAccess'
+import { getSafeBoxEnabled, saveSafeBoxEnabled, clearSafeBoxPassword, getSafeBoxPassword, saveSafeBoxPassword } from '../utils/safeBox'
 import styles from './Header.module.css'
 
 export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker, onLogoClick, siteStatusEnabled, onToggleSiteStatus }) {
@@ -12,7 +14,18 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
   const [cityResults, setCityResults] = useState([])
   const [currentCity, setCurrentCity] = useState('')
   const [weatherEnabled, setWeatherEnabled] = useState(() => getWeatherEnabled())
+  const [quickAccessEnabled, setQuickAccessEnabled] = useState(() => getQuickAccessEnabled())
+  const [safeBoxEnabled, setSafeBoxEnabled] = useState(() => getSafeBoxEnabled())
+  const [safeBoxPasswordInput, setSafeBoxPasswordInput] = useState('')
+  const [safeBoxSettingUp, setSafeBoxSettingUp] = useState(false)
   const searchTimeoutRef = useRef(null)
+
+  // 监听保险箱弹窗内关闭/开启事件
+  useEffect(() => {
+    const handler = () => setSafeBoxEnabled(getSafeBoxEnabled())
+    window.addEventListener('safeBoxToggled', handler)
+    return () => window.removeEventListener('safeBoxToggled', handler)
+  }, [])
 
   // 初始化城市
   useEffect(() => {
@@ -141,6 +154,100 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
                   </label>
 
                   <div className={styles.configDivider} />
+
+                  {/* 快捷入口开关 */}
+                  <label className={styles.configRow}>
+                    <div className={styles.configLabel}>
+                      <Zap size={14} />
+                      <div>
+                        <span className={styles.configName}>快捷入口</span>
+                        <span className={styles.configDesc}>显示最近使用、置顶等快捷分类</span>
+                      </div>
+                    </div>
+                    <button
+                      className={`${styles.configToggle} ${quickAccessEnabled ? styles.configToggleOn : ''}`}
+                      onClick={() => {
+                        const newVal = !quickAccessEnabled
+                        setQuickAccessEnabled(newVal)
+                        saveQuickAccessEnabled(newVal)
+                        window.dispatchEvent(new CustomEvent('quickAccessToggleChanged'))
+                      }}
+                    >
+                      <span className={styles.configToggleThumb} />
+                    </button>
+                  </label>
+
+                  <div className={styles.configDivider} />
+
+                  {/* 保险箱开关 */}
+                  {!safeBoxEnabled && (
+                    <>
+                      <div className={styles.configSection}>
+                        <div className={styles.configRow}>
+                          <div className={styles.configLabel}>
+                            <Lock size={14} />
+                            <div>
+                              <span className={styles.configName}>保险箱</span>
+                              <span className={styles.configDesc}>搜索引擎输入密码打开隐藏网站</span>
+                            </div>
+                          </div>
+                          <button
+                            className={`${styles.configToggle} ${safeBoxSettingUp ? styles.configToggleOn : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSafeBoxSettingUp(!safeBoxSettingUp)
+                              if (safeBoxSettingUp) {
+                                setSafeBoxPasswordInput('')
+                              }
+                            }}
+                          >
+                            <span className={styles.configToggleThumb} />
+                          </button>
+                        </div>
+                        {safeBoxSettingUp && (
+                          <div style={{ marginTop: 8 }}>
+                            <div className={styles.citySearchBox}>
+                              <Lock size={12} className={styles.citySearchIcon} />
+                              <input
+                                type="password"
+                                value={safeBoxPasswordInput}
+                                onChange={(e) => setSafeBoxPasswordInput(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && safeBoxPasswordInput.trim()) {
+                                    saveSafeBoxPassword(safeBoxPasswordInput.trim())
+                                    setSafeBoxEnabled(true)
+                                    saveSafeBoxEnabled(true)
+                                    setSafeBoxPasswordInput('')
+                                    setSafeBoxSettingUp(false)
+                                  }
+                                }}
+                                placeholder="设置保险箱密码..."
+                                className={styles.citySearchInput}
+                              />
+                            </div>
+                            {safeBoxPasswordInput.trim() && (
+                              <button
+                                className={styles.cityResultItem}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  saveSafeBoxPassword(safeBoxPasswordInput.trim())
+                                  setSafeBoxEnabled(true)
+                                  saveSafeBoxEnabled(true)
+                                  setSafeBoxPasswordInput('')
+                                  setSafeBoxSettingUp(false)
+                                }}
+                                style={{ marginTop: 4 }}
+                              >
+                                <span className={styles.cityResultName}>确认并开启保险箱</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className={styles.configDivider} />
+                    </>
+                  )}
 
                   {/* 天气城市 + 开关 */}
                   <div className={styles.configSection}>

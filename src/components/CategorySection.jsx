@@ -22,6 +22,19 @@ export default function CategorySection({
   const [activeTag, setActiveTag] = useState('全部')
   const tagContainerRef = useRef(null)
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
+  const [flash, setFlash] = useState(false)
+
+  // 监听滚动定位闪动
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail?.categoryId === category.id) {
+        setFlash(true)
+        setTimeout(() => setFlash(false), 1200)
+      }
+    }
+    window.addEventListener('categoryFlash', handler)
+    return () => window.removeEventListener('categoryFlash', handler)
+  }, [category.id])
 
   const tagNames = category.tags || []
   
@@ -158,7 +171,8 @@ export default function CategorySection({
 
   return (
     <section 
-      className={styles.section}
+      className={`${styles.section} ${flash ? styles.flash : ''}`}
+      id={`category-${category.id}`}
       onDragOver={handleCatDragOver}
       onDrop={handleCatDrop}
     >

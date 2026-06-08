@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Edit2, Trash2, GripVertical } from 'lucide-react'
 import { checkSiteStatus } from '../utils/siteStatus'
+import { recordSiteClick } from '../utils/quickAccess'
 import styles from './SiteCard.module.css'
 
 function getAutoFaviconUrl(url) {
@@ -47,6 +48,7 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
 
   const handleClick = () => {
     if (!isEditMode) {
+      recordSiteClick(site)
       window.open(site.url, '_blank', 'noopener,noreferrer')
     }
   }
