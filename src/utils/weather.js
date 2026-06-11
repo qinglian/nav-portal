@@ -122,14 +122,18 @@ export async function fetchWeather(lat, lon) {
 
   try {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 10000)
-    const resp = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto`,
-      { signal: controller.signal }
-    )
+    const timeout = setTimeout(() => controller.abort(), 15000)
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto`
+    console.log('天气请求:', url)
+    const resp = await fetch(url, { 
+      signal: controller.signal,
+      headers: { 'Accept': 'application/json' }
+    })
     clearTimeout(timeout)
+    console.log('天气响应状态:', resp.status)
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
     const data = await resp.json()
+    console.log('天气数据:', data)
     if (data.current) {
       const c = data.current
       const wmo = mapWMO(c.weather_code)
@@ -148,15 +152,16 @@ export async function fetchWeather(lat, lon) {
       localStorage.setItem(WEATHER_CACHE_TIME, Date.now().toString())
       return weather
     }
+    console.error('天气数据缺少 current 字段:', data)
     return null
   } catch (err) {
-    console.error('天气获取失败:', err)
+    console.error('天气获取失败:', err.message || err)
     return null
   }
 }
 
 // 中国主要城市列表（用于反向地理编码匹配）
-const CHINA_CITIES = [
+export const CHINA_CITIES = [
   // 直辖市
   { name: '北京', lat: 39.9042, lon: 116.4074 },
   { name: '上海', lat: 31.2304, lon: 121.4737 },

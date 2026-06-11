@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 44px;
+  min-height: 56px;
 }
 
 .logo {
@@ -20,6 +20,7 @@
   gap: 8px;
   text-decoration: none;
   flex-shrink: 0;
+  height: 44px;
 }
 
 .logoText {
@@ -29,7 +30,7 @@
 }
 
 .logoTitle {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
@@ -53,7 +54,11 @@
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-full);
-  transition: all var(--transition-fast);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0;
+  overflow: hidden;
+  height: 44px;
+  box-sizing: border-box;
 }
 
 .searchBox:focus-within {
@@ -86,6 +91,34 @@
   gap: 6px;
   flex-shrink: 0;
   margin-left: auto;
+  padding: 6px 10px;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* 编辑模式下右侧按钮固定悬浮（位置由 JS 控制） */
+.actionsSticky {
+  z-index: 200;
+}
+
+/* 占位符，防止 fixed 脱离文档流后布局偏移 */
+.actionsSpacer {
+  flex-shrink: 0;
+  margin-left: auto;
+  visibility: hidden;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+}
+
+/* 编辑模式下搜索框右边距由 JS 动态计算 */
+.searchBoxEditMode {
+  /* margin-right 由内联样式动态设置 */
 }
 
 .editBtn {
@@ -295,14 +328,34 @@
   right: 0;
   min-width: 240px;
   background: var(--glass-bg-heavy);
-  backdrop-filter: var(--glass-blur-heavy);
-  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  backdrop-filter: blur(100px) saturate(220%);
+  -webkit-backdrop-filter: blur(100px) saturate(220%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   padding: 12px;
   z-index: 200;
   animation: menuFadeIn 0.15s ease-out;
+  overflow: hidden;
+}
+
+.siteConfigMenu::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(60px);
+  -webkit-backdrop-filter: blur(60px);
+  z-index: -1;
+}
+
+/* 深色模式下拉菜单磨砂质感 */
+[data-theme="dark"] .siteConfigMenu {
+  background: rgba(30, 30, 30, 0.92);
+}
+
+[data-theme="dark"] .siteConfigMenu::before {
+  background: rgba(30, 30, 30, 0.7);
 }
 
 .configTitle {
@@ -470,6 +523,75 @@
 
 .cityResultAdm {
   font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* 二级菜单切换 */
+.submenuToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.submenuArrow {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.submenuArrowOpen {
+  transform: rotate(180deg);
+}
+
+/* 二级菜单内容 */
+.subMenu {
+  padding: 8px 0 8px 16px;
+  animation: submenuIn 0.2s ease;
+}
+
+@keyframes submenuIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.subMenuItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.subMenuItem:last-child {
+  margin-bottom: 0;
+}
+
+.subMenuLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.subMenuInput {
+  padding: 6px 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.subMenuInput:focus {
+  border-color: var(--accent-primary);
+}
+
+.subMenuInput::placeholder {
   color: var(--text-tertiary);
 }
 

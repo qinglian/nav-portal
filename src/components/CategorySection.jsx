@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plus, Edit2, Trash2, GripVertical } from 'lucide-react'
+import { Plus, Edit2, Trash2, EyeOff, GripVertical } from 'lucide-react'
 import SiteCard from './SiteCard'
 import styles from './CategorySection.module.css'
 
@@ -14,15 +14,26 @@ export default function CategorySection({
   onReorderSites,
   onReorderTags,
   onReorderCategories,
+  onToggleCategoryVisibility,
   categoryIndex,
   allCategories,
   onSiteContextMenu,
-  siteStatusEnabled
+  siteStatusEnabled,
+  isHidden,
+  catDragId,
+  catDropTargetId,
+  onCatDragStart,
+  onCatDragEnter,
+  onCatDragEnd
 }) {
   const [activeTag, setActiveTag] = useState('全部')
   const tagContainerRef = useRef(null)
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
   const [flash, setFlash] = useState(false)
+
+  // 拖拽排序状态
+  const [siteDragOverIndex, setSiteDragOverIndex] = useState(null)
+  const siteDragIndex = useRef(null)
 
   // 监听滚动定位闪动
   useEffect(() => {
@@ -61,134 +72,151 @@ export default function CategorySection({
     }
   }
 
-  // ========== 分类拖拽排序 ==========
-  const handleCatDragStart = (e) => {
-    if (!isEditMode) return
-    e.dataTransfer.setData('application/json', JSON.stringify({
-      type: 'category',
-      fromIndex: categoryIndex
-    }))
-    e.dataTransfer.effectAllowed = 'move'
-  }
+  // ========== 分类拖拽排序 - 使用 mouse events（避免 HTML5 DnD 嵌套问题）==========
+  const isCatDragging = catDragId === category.id
+  const isCatDropTarget = catDropTargetId === category.id
 
-  const handleCatDragOver = (e) => {
+  const handleCatMouseDown = (e) => {
     if (!isEditMode) return
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-  }
+    e.stopPropagation()
+    onCatDragStart && onCatDragStart(category.id)
 
-  const handleCatDrop = (e) => {
-    e.preventDefault()
-    if (!isEditMode) return
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('application/json'))
-      if (data.type === 'category' && data.fromIndex !== categoryIndex) {
-        const newCats = [...allCategories]
-        const [moved] = newCats.splice(data.fromIndex, 1)
-        newCats.splice(categoryIndex, 0, moved)
-        onReorderCategories(newCats)
+    // 添加全局样式防止文本选择
+    document.body.style.userSelect = 'none'
+    document.body.style.cursor = 'grabbing'
+
+    let lastTargetId = null
+
+    const handleMouseMove = (moveEvent) => {
+      // 使用 elementFromPoint 精确检测鼠标下方的分类（更跟手）
+      const elem = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)
+      if (!elem) return
+      const section = elem.closest('[data-cat-section]')
+      if (section) {
+        const targetId = section.dataset.catSection
+        if (targetId && targetId !== lastTargetId && targetId !== category.id) {
+          lastTargetId = targetId
+          onCatDragEnter && onCatDragEnter(targetId)
+        }
       }
-    } catch (err) {
-      console.log('Drop error:', err)
     }
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+      // 传递最终目标分类ID
+      onCatDragEnd && onCatDragEnd(lastTargetId)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
   }
 
-  // ========== 子分类标签拖拽排序 ==========
+  // ========== 子分类标签拖拽排序 - 实时预览 ==========
+  const [tagDragOverIndex, setTagDragOverIndex] = useState(null)
+  const tagDragIndex = useRef(null)
+
   const handleTagDragStart = (e, tagIndex) => {
-    if (!isEditMode) return
-    e.dataTransfer.setData('application/json', JSON.stringify({
-      type: 'tag',
-      categoryId: category.id,
-      fromIndex: tagIndex
-    }))
+    tagDragIndex.current = tagIndex
     e.dataTransfer.effectAllowed = 'move'
-    e.currentTarget.style.opacity = '0.5'
+    const img = new Image()
+    img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    e.dataTransfer.setDragImage(img, 0, 0)
   }
 
   const handleTagDragEnd = (e) => {
-    e.currentTarget.style.opacity = '1'
+    tagDragIndex.current = null
+    setTagDragOverIndex(null)
   }
 
-  const handleTagDragOver = (e) => {
-    if (!isEditMode) return
+  const handleTagDragOver = (e, index) => {
     e.preventDefault()
+    e.stopPropagation()
     e.dataTransfer.dropEffect = 'move'
+    if (tagDragOverIndex !== index) {
+      setTagDragOverIndex(index)
+      if (tagDragIndex.current !== null && tagDragIndex.current !== index) {
+        const newTags = [...tagNames]
+        const [moved] = newTags.splice(tagDragIndex.current, 1)
+        newTags.splice(index, 0, moved)
+        onReorderTags(category.id, newTags)
+        tagDragIndex.current = index
+      }
+    }
+  }
+
+  const handleTagDragLeave = (e) => {
+    setTagDragOverIndex(null)
   }
 
   const handleTagDrop = (e, toIndex) => {
     e.preventDefault()
-    if (!isEditMode) return
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('application/json'))
-      if (data.type === 'tag' && data.categoryId === category.id && data.fromIndex !== toIndex) {
-        const newTags = [...tagNames]
-        const [moved] = newTags.splice(data.fromIndex, 1)
-        newTags.splice(toIndex, 0, moved)
-        onReorderTags(category.id, newTags)
+    tagDragIndex.current = null
+    setTagDragOverIndex(null)
+  }
+
+  // ========== 网站拖拽排序 - 实时预览 ==========
+  const handleSiteDragStart = (e, siteIndex) => {
+    siteDragIndex.current = siteIndex
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/site-index', String(siteIndex))
+    const img = new Image()
+    img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    e.dataTransfer.setDragImage(img, 0, 0)
+  }
+
+  const handleSiteDragOver = (e, index) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (siteDragOverIndex !== index) {
+      setSiteDragOverIndex(index)
+      if (siteDragIndex.current !== null && siteDragIndex.current !== index) {
+        const newSites = [...category.sites]
+        const [moved] = newSites.splice(siteDragIndex.current, 1)
+        newSites.splice(index, 0, moved)
+        onReorderSites(category.id, newSites)
+        siteDragIndex.current = index
       }
-    } catch (err) {
-      console.log('Tag drop error:', err)
     }
   }
 
-  // ========== 网站拖拽排序 ==========
-  const handleSiteDragStart = (e, siteIndex) => {
-    if (!isEditMode) return
-    e.dataTransfer.setData('application/json', JSON.stringify({
-      type: 'site',
-      categoryId: category.id,
-      fromIndex: siteIndex
-    }))
-    e.dataTransfer.effectAllowed = 'move'
-    e.currentTarget.style.opacity = '0.5'
-  }
-
-  const handleSiteDragEnd = (e) => {
-    e.currentTarget.style.opacity = '1'
-  }
-
-  const handleSiteDragOver = (e) => {
-    if (!isEditMode) return
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
+  const handleSiteDragLeave = (e) => {
+    setSiteDragOverIndex(null)
   }
 
   const handleSiteDrop = (e, toIndex) => {
     e.preventDefault()
-    if (!isEditMode) return
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('application/json'))
-      if (data.type === 'site' && data.categoryId === category.id && data.fromIndex !== toIndex) {
-        const newSites = [...category.sites]
-        const [moved] = newSites.splice(data.fromIndex, 1)
-        newSites.splice(toIndex, 0, moved)
-        onReorderSites(category.id, newSites)
-      }
-    } catch (err) {
-      console.log('Site drop error:', err)
-    }
+    siteDragIndex.current = null
+    setSiteDragOverIndex(null)
+  }
+
+  const handleSiteDragEnd = (e) => {
+    siteDragIndex.current = null
+    setSiteDragOverIndex(null)
   }
 
   return (
     <section 
-      className={`${styles.section} ${flash ? styles.flash : ''}`}
+      className={`${styles.section} ${flash ? styles.flash : ''} ${isCatDragging ? styles.catDragging : ''} ${isCatDropTarget ? styles.catDropTarget : ''}`}
       id={`category-${category.id}`}
-      onDragOver={handleCatDragOver}
-      onDrop={handleCatDrop}
+      data-cat-section={category.id}
     >
       <div className={styles.container}>
         {/* Header */}
         <div className={styles.header}>
-          <div 
-            className={styles.titleWrapper}
-            draggable={isEditMode}
-            onDragStart={handleCatDragStart}
-          >
-            {isEditMode && (
-              <div className={styles.catDragHandle}>
-                <GripVertical size={16} />
-              </div>
-            )}
+          {isEditMode && (
+            <div 
+              className={styles.catDragHandle}
+              onMouseDown={handleCatMouseDown}
+              onClick={(e) => e.stopPropagation()}
+              title="拖动排序"
+            >
+              <GripVertical size={16} />
+            </div>
+          )}
+          <div className={styles.titleWrapper}>
             <div className={styles.titleIcon}>
               {category.name.charAt(0)}
             </div>
@@ -198,6 +226,13 @@ export default function CategorySection({
           
           {isEditMode && (
             <div className={styles.actions}>
+              <button 
+                onClick={() => onToggleCategoryVisibility && onToggleCategoryVisibility(category.id)} 
+                className={`${styles.hideBtn} ${isHidden ? styles.hideBtnActive : ''}`} 
+                title={isHidden ? '取消隐藏' : '隐藏分类'}
+              >
+                <EyeOff size={14} />
+              </button>
               <button onClick={() => onAddSite(category.id)} className={styles.addBtn} title="添加网站">
                 <Plus size={14} />
               </button>
@@ -232,11 +267,11 @@ export default function CategorySection({
                 onClick={() => setActiveTag(tag)}
                 onDragStart={(e) => handleTagDragStart(e, index)}
                 onDragEnd={handleTagDragEnd}
-                onDragOver={handleTagDragOver}
+                onDragOver={(e) => handleTagDragOver(e, index)}
+                onDragLeave={handleTagDragLeave}
                 onDrop={(e) => handleTagDrop(e, index)}
-                className={`${styles.tag} ${activeTag === tag ? styles.active : ''} ${isEditMode ? styles.tagDraggable : ''}`}
+                className={`${styles.tag} ${activeTag === tag ? styles.active : ''} ${isEditMode ? styles.tagDraggable : ''} ${tagDragOverIndex === index ? styles.tagDragOver : ''}`}
               >
-                {isEditMode && <GripVertical size={10} className={styles.tagDragIcon} />}
                 {tag}
               </button>
             ))}
@@ -259,9 +294,10 @@ export default function CategorySection({
               key={site.id}
               draggable={isEditMode}
               onDragStart={(e) => handleSiteDragStart(e, index)}
-              onDragEnd={handleSiteDragEnd}
-              onDragOver={handleSiteDragOver}
+              onDragOver={(e) => handleSiteDragOver(e, index)}
+              onDragLeave={handleSiteDragLeave}
               onDrop={(e) => handleSiteDrop(e, index)}
+              onDragEnd={handleSiteDragEnd}
               className={isEditMode ? styles.draggable : ''}
             >
               <SiteCard
@@ -271,6 +307,7 @@ export default function CategorySection({
                 onDelete={() => onDeleteSite(category.id, site.id)}
                 onContextMenu={onSiteContextMenu}
                 siteStatusEnabled={siteStatusEnabled}
+                dragOver={siteDragOverIndex === index}
               />
             </div>
           ))}

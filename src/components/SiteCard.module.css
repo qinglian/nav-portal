@@ -24,29 +24,11 @@
   background: var(--glass-bg-heavy);
 }
 
-.dragHandle {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  color: var(--text-tertiary);
-  cursor: grab;
-  opacity: 0;
-  display: flex;
-  align-items: center;
-  padding: 3px;
-  background: var(--glass-bg-heavy);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-radius: var(--radius-sm);
-  z-index: 2;
-}
-
-.card:hover .dragHandle {
-  opacity: 0.7;
-}
-
-.dragHandle:active {
-  cursor: grabbing;
+/* 拖动时的目标位置高亮 */
+.dragOver {
+  transform: scale(1.03);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }
 
 /* 1:1 正方形图标 */
@@ -114,6 +96,38 @@
 
 .tag {
   display: none;
+}
+
+.dragHandle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  color: var(--text-tertiary);
+  cursor: grab;
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-sm);
+  z-index: 2;
+  transition: opacity var(--transition-fast);
+}
+
+.card:hover .dragHandle {
+  opacity: 0.7;
+}
+
+.dragHandle:hover {
+  opacity: 1;
+  background: var(--accent-primary);
+  color: white;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
 }
 
 .actions {

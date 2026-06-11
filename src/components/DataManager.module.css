@@ -36,14 +36,33 @@
   right: 0;
   min-width: 220px;
   background: var(--glass-bg-heavy);
-  backdrop-filter: var(--glass-blur-heavy);
-  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  backdrop-filter: blur(100px) saturate(220%);
+  -webkit-backdrop-filter: blur(100px) saturate(220%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   z-index: 200;
   animation: menuFadeIn 0.15s ease-out;
+}
+
+.menu::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(60px);
+  -webkit-backdrop-filter: blur(60px);
+  z-index: -1;
+}
+
+/* 深色模式下拉菜单磨砂质感 */
+[data-theme="dark"] .menu {
+  background: rgba(30, 30, 30, 0.92);
+}
+
+[data-theme="dark"] .menu::before {
+  background: rgba(30, 30, 30, 0.7);
 }
 
 @keyframes menuFadeIn {

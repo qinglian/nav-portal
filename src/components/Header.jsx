@@ -1,4 +1,4 @@
-import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon, Zap, Lock } from 'lucide-react'
+import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon, Zap, Lock, Type } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import DataManager from './DataManager'
@@ -7,7 +7,7 @@ import { getQuickAccessEnabled, saveQuickAccessEnabled } from '../utils/quickAcc
 import { getSafeBoxEnabled, saveSafeBoxEnabled, clearSafeBoxPassword, getSafeBoxPassword, saveSafeBoxPassword } from '../utils/safeBox'
 import styles from './Header.module.css'
 
-export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker, onLogoClick, siteStatusEnabled, onToggleSiteStatus }) {
+export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker, onLogoClick, siteStatusEnabled, onToggleSiteStatus, siteTitle, siteSubtitle, onUpdateSiteTitle, onUpdateSiteSubtitle }) {
   const { theme, toggleTheme } = useTheme()
   const [showSiteConfig, setShowSiteConfig] = useState(false)
   const [citySearch, setCitySearch] = useState('')
@@ -18,7 +18,27 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
   const [safeBoxEnabled, setSafeBoxEnabled] = useState(() => getSafeBoxEnabled())
   const [safeBoxPasswordInput, setSafeBoxPasswordInput] = useState('')
   const [safeBoxSettingUp, setSafeBoxSettingUp] = useState(false)
+  const [showTitleSubmenu, setShowTitleSubmenu] = useState(false)
+  const [pageTitle, setPageTitle] = useState(() => document.title)
+  const [actionsFixedPos, setActionsFixedPos] = useState(null)
+  const [actionsWidth, setActionsWidth] = useState(0)
+  const actionsRef = useRef(null)
   const searchTimeoutRef = useRef(null)
+
+  // 编辑模式下获取按钮原始位置、宽度并固定悬浮
+  useEffect(() => {
+    if (isEditMode && actionsRef.current) {
+      const rect = actionsRef.current.getBoundingClientRect()
+      setActionsFixedPos({
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX,
+      })
+      setActionsWidth(rect.width - 12) // 缩小间隙
+    } else {
+      setActionsFixedPos(null)
+      setActionsWidth(0)
+    }
+  }, [isEditMode])
 
   // 监听保险箱弹窗内关闭/开启事件
   useEffect(() => {
@@ -96,13 +116,16 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
         {/* Left - Logo */}
         <a href="javascript:void(0)" className={styles.logo} onClick={(e) => { e.preventDefault(); onLogoClick && onLogoClick() }}>
           <div className={styles.logoText}>
-            <span className={styles.logoTitle}>清炼导航</span>
-            <span className={styles.logoUrl}>QingLian</span>
+            <span className={styles.logoTitle}>{siteTitle}</span>
+            <span className={styles.logoUrl}>{siteSubtitle}</span>
           </div>
         </a>
 
         {/* Center - Internal Site Search */}
-        <div className={styles.searchBox}>
+        <div
+          className={`${styles.searchBox} ${isEditMode ? styles.searchBoxEditMode : ''}`}
+          style={isEditMode && actionsWidth ? { marginRight: actionsWidth + 'px' } : {}}
+        >
           <Search size={16} className={styles.searchIcon} />
           <input
             type="text"
@@ -114,7 +137,17 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
         </div>
 
         {/* Right - Actions */}
-        <div className={styles.actions}>
+        {isEditMode && <div className={styles.actionsSpacer} />}
+        <div
+          ref={actionsRef}
+          className={`${styles.actions} ${isEditMode ? styles.actionsSticky : ''}`}
+          style={isEditMode && actionsFixedPos ? {
+            position: 'fixed',
+            top: actionsFixedPos.top + 'px',
+            left: actionsFixedPos.left + 'px',
+            marginLeft: 0,
+          } : {}}
+        >
           <DataManager isEditMode={isEditMode} />
           
           {isEditMode && (
@@ -248,6 +281,69 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
                       <div className={styles.configDivider} />
                     </>
                   )}
+
+                  {/* 网站标题编辑 - 二级菜单 */}
+                  <div className={styles.configSection}>
+                    <div 
+                      className={styles.submenuToggle}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowTitleSubmenu(!showTitleSubmenu)
+                      }}
+                    >
+                      <div className={styles.configLabel}>
+                        <Type size={14} />
+                        <div>
+                          <span className={styles.configName}>网站标题</span>
+                          <span className={styles.configDesc}>{siteTitle} - {siteSubtitle}</span>
+                        </div>
+                      </div>
+                      <span className={`${styles.submenuArrow} ${showTitleSubmenu ? styles.submenuArrowOpen : ''}`}>▼</span>
+                    </div>
+                    {showTitleSubmenu && (
+                      <div className={styles.subMenu}>
+                        <div className={styles.subMenuItem}>
+                          <label className={styles.subMenuLabel}>网站标题</label>
+                          <input
+                            type="text"
+                            value={siteTitle}
+                            onChange={(e) => onUpdateSiteTitle(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            placeholder="网站标题..."
+                            className={styles.subMenuInput}
+                          />
+                        </div>
+                        <div className={styles.subMenuItem}>
+                          <label className={styles.subMenuLabel}>副标题</label>
+                          <input
+                            type="text"
+                            value={siteSubtitle}
+                            onChange={(e) => onUpdateSiteSubtitle(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            placeholder="副标题..."
+                            className={styles.subMenuInput}
+                          />
+                        </div>
+                        <div className={styles.subMenuItem}>
+                          <label className={styles.subMenuLabel}>网页标题</label>
+                          <input
+                            type="text"
+                            value={pageTitle}
+                            onChange={(e) => {
+                              const newTitle = e.target.value
+                              setPageTitle(newTitle)
+                              document.title = newTitle
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            placeholder="浏览器标签页标题..."
+                            className={styles.subMenuInput}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.configDivider} />
 
                   {/* 天气城市 + 开关 */}
                   <div className={styles.configSection}>

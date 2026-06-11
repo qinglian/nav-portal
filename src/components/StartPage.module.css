@@ -16,51 +16,50 @@
   to { opacity: 1; }
 }
 
-/* ==================== 顶部工具栏 ==================== */
+/* ==================== 顶部工具栏 - 默认隐藏 hover 显示 ==================== */
 .topBar {
   position: fixed;
-  top: 20px;
-  right: 24px;
+  top: 0;
+  right: 0;
+  width: 220px;
+  height: 80px;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px;
   z-index: 60;
+  padding: 20px 24px 0 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  white-space: nowrap;
+  flex-wrap: nowrap;
 }
 
-.navBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  border-radius: 20px;
-  border: none;
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  color: #555;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  transition: all 0.25s ease;
+/* 只有鼠标划过右上角区域时才显示按钮 */
+.topBar:hover {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.navBtn:hover {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow:
-    0 6px 25px rgba(0, 0, 0, 0.1),
-    0 2px 6px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transform: translateY(-1px);
+/* 按钮默认不可见但可交互（用于hover触发） */
+.topBar .topBtn,
+.topBar .navBtn {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
-.themeBtn {
-  width: 38px;
-  height: 38px;
+.topBar:hover .topBtn,
+.topBar:hover .navBtn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 统一圆形按钮 */
+.topBtn {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.65);
@@ -79,9 +78,45 @@
   transition: all 0.25s ease;
 }
 
-.themeBtn:hover {
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateY(-1px) rotate(15deg);
+.topBtn:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow:
+    0 6px 25px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* 导航按钮 -  pill 形状 */
+.navBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  border-radius: 18px;
+  border: none;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #555;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.25s ease;
+}
+
+.navBtn:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 6px 25px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
 }
 
 /* ==================== 中间内容 ==================== */
@@ -89,7 +124,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 40px;
+  gap: 32px;
   width: 100%;
   padding: 0;
   box-sizing: border-box;
@@ -168,7 +203,7 @@
   color: rgba(0, 0, 0, 0.2);
 }
 
-/* ==================== 搜索框 - Mac玻璃风格 ==================== */
+/* ==================== 搜索框 ==================== */
 .searchWrapper {
   width: 36vw;
   max-width: none;
@@ -207,7 +242,6 @@
   transform: scale(1.01);
 }
 
-/* 搜索引擎选择器 */
 .engineSelector {
   position: relative;
   display: flex;
@@ -253,7 +287,6 @@
   transform: rotate(180deg);
 }
 
-/* 搜索引擎下拉 */
 .engineDropdown {
   position: absolute;
   top: calc(100% + 6px);
@@ -308,7 +341,6 @@
   font-size: 12px;
 }
 
-/* 搜索输入区域 */
 .inputWrapper {
   display: flex;
   align-items: center;
@@ -358,7 +390,6 @@
   color: #666;
 }
 
-/* ==================== 搜索建议 ==================== */
 .suggestions {
   position: absolute;
   top: calc(100% + 8px);
@@ -434,6 +465,275 @@
   color: #667eea;
 }
 
+/* ==================== 快捷网页 ==================== */
+.shortcutsWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: slideUp 0.6s ease 0.3s both;
+}
+
+.shortcutsList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  max-width: 600px;
+}
+
+.shortcutItem {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.shortcutItemDraggable {
+  cursor: grab;
+}
+
+.shortcutItemDraggable:active {
+  cursor: grabbing;
+}
+
+/* 拖动时的实时预览样式 */
+.dragOver {
+  transform: scale(1.05);
+  transition: transform 0.15s ease;
+}
+
+.shortcutItem.dragOver .shortcutIcon {
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.4);
+}
+
+.shortcutLink {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  padding: 6px;
+  border-radius: 12px;
+  transition: all 0.25s ease;
+}
+
+.shortcutLink:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.shortcutIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  transition: all 0.25s ease;
+  font-size: 16px;
+  font-weight: 700;
+  color: #555;
+}
+
+.shortcutLink:hover .shortcutIcon {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  transform: scale(1.05);
+}
+
+.shortcutIcon img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.shortcutName {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.55);
+  max-width: 60px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+/* 编辑模式操作按钮 */
+.shortcutActions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.shortcutItem:hover .shortcutActions {
+  opacity: 1;
+}
+
+.shortcutActionBtn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.06);
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.shortcutActionBtn:hover {
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+}
+
+.shortcutActionBtn:last-child:hover {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+}
+
+/* 编辑表单 */
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  min-width: 160px;
+}
+
+.editInput {
+  padding: 5px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #333;
+  outline: none;
+}
+
+.editInput::placeholder {
+  color: #999;
+}
+
+.editActions {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.editCancel,
+.editSave {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editCancel {
+  background: rgba(0, 0, 0, 0.06);
+  color: #666;
+}
+
+.editCancel:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.editSave {
+  background: var(--accent-gradient);
+  color: white;
+}
+
+.editSave:hover {
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+/* 添加按钮 */
+.shortcutAdd {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  border: 1.5px dashed rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.3);
+  color: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  margin-top: 6px;
+}
+
+.shortcutAdd:hover {
+  border-color: rgba(0, 122, 255, 0.4);
+  color: rgba(0, 122, 255, 0.7);
+  background: rgba(0, 122, 255, 0.05);
+}
+
+/* 添加表单 */
+.shortcutForm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.shortcutInput {
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #333;
+  outline: none;
+  width: 100px;
+}
+
+.shortcutInput::placeholder {
+  color: #999;
+}
+
+.shortcutConfirm {
+  padding: 6px 12px;
+  border: none;
+  background: var(--accent-gradient);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shortcutConfirm:hover {
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
 /* ==================== 底部提示 ==================== */
 .hint {
   font-size: 12px;
@@ -443,181 +743,272 @@
   animation: slideUp 0.6s ease 0.3s both;
 }
 
-/* ==================== 暗色主题 ==================== */
-@media (prefers-color-scheme: dark) {
-  .greeting {
-    color: rgba(255, 255, 255, 0.3);
-  }
+/* ==================== 暗色主题 - 使用 data-theme="dark" ==================== */
+:global([data-theme="dark"]) .greeting {
+  color: rgba(255, 255, 255, 0.35);
+}
 
-  .timeHour,
-  .timeMinute {
-    color: rgba(255, 255, 255, 0.88);
-  }
+:global([data-theme="dark"]) .timeHour,
+:global([data-theme="dark"]) .timeMinute {
+  color: rgba(255, 255, 255, 0.9);
+}
 
-  .timeColon {
-    color: rgba(255, 255, 255, 0.25);
-  }
+:global([data-theme="dark"]) .timeColon {
+  color: rgba(255, 255, 255, 0.35);
+}
 
-  .timeSecond {
-    color: rgba(255, 255, 255, 0.25);
-  }
+:global([data-theme="dark"]) .timeSecond {
+  color: rgba(255, 255, 255, 0.35);
+}
 
-  .dateInfo {
-    color: rgba(255, 255, 255, 0.35);
-  }
+:global([data-theme="dark"]) .dateInfo {
+  color: rgba(255, 255, 255, 0.45);
+}
 
-  .dateDivider {
-    color: rgba(255, 255, 255, 0.15);
-  }
+:global([data-theme="dark"]) .dateDivider {
+  color: rgba(255, 255, 255, 0.2);
+}
 
-  .navBtn {
-    background: rgba(40, 40, 55, 0.65);
-    color: #aaa;
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.2),
-      0 1px 3px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
+:global([data-theme="dark"]) .topBtn {
+  background: rgba(40, 40, 55, 0.65);
+  color: #aaa;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
 
-  .navBtn:hover {
-    background: rgba(50, 50, 65, 0.75);
-    box-shadow:
-      0 6px 25px rgba(0, 0, 0, 0.25),
-      0 2px 6px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
+:global([data-theme="dark"]) .topBtn:hover {
+  background: rgba(50, 50, 65, 0.75);
+  box-shadow:
+    0 6px 25px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
 
-  .themeBtn {
-    background: rgba(40, 40, 55, 0.65);
-    color: #aaa;
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.2),
-      0 1px 3px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
+:global([data-theme="dark"]) .navBtn {
+  background: rgba(40, 40, 55, 0.65);
+  color: #aaa;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
 
-  .themeBtn:hover {
-    background: rgba(50, 50, 65, 0.75);
-  }
+:global([data-theme="dark"]) .navBtn:hover {
+  background: rgba(50, 50, 65, 0.75);
+  box-shadow:
+    0 6px 25px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
 
-  .searchBox {
-    background: rgba(40, 40, 55, 0.55);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.2),
-      0 2px 8px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
+:global([data-theme="dark"]) .searchBox {
+  background: rgba(40, 40, 55, 0.55);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
 
-  .searchBox:focus-within {
-    background: rgba(45, 45, 60, 0.65);
-    box-shadow:
-      0 12px 40px rgba(0, 0, 0, 0.25),
-      0 4px 12px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
+:global([data-theme="dark"]) .searchBox:focus-within {
+  background: rgba(45, 45, 60, 0.65);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
+}
 
-  .engineBtn:hover {
-    background: rgba(255, 255, 255, 0.06);
-  }
+:global([data-theme="dark"]) .engineBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
 
-  .engineName {
-    color: #bbb;
-  }
+:global([data-theme="dark"]) .engineName {
+  color: #bbb;
+}
 
-  .chevron {
-    color: #666;
-  }
+:global([data-theme="dark"]) .chevron {
+  color: #666;
+}
 
-  .engineDropdown {
-    background: rgba(35, 35, 50, 0.9);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow:
-      0 8px 30px rgba(0, 0, 0, 0.3),
-      0 2px 8px rgba(0, 0, 0, 0.2);
-  }
+:global([data-theme="dark"]) .engineDropdown {
+  background: rgba(35, 35, 50, 0.9);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+}
 
-  .engineOption {
-    color: #bbb;
-  }
+:global([data-theme="dark"]) .engineOption {
+  color: #bbb;
+}
 
-  .engineOption:hover {
-    background: rgba(255, 255, 255, 0.06);
-  }
+:global([data-theme="dark"]) .engineOption:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
 
-  .engineOptionActive {
-    background: rgba(102, 126, 234, 0.15);
-    color: #8b9cf7;
-  }
+:global([data-theme="dark"]) .engineOptionActive {
+  background: rgba(102, 126, 234, 0.15);
+  color: #8b9cf7;
+}
 
-  .engineCheck {
-    color: #8b9cf7;
-  }
+:global([data-theme="dark"]) .engineCheck {
+  color: #8b9cf7;
+}
 
-  .searchIcon {
-    color: #666;
-  }
+:global([data-theme="dark"]) .searchIcon {
+  color: #666;
+}
 
-  .searchInput {
-    color: #eee;
-  }
+:global([data-theme="dark"]) .searchInput {
+  color: #eee;
+}
 
-  .searchInput::placeholder {
-    color: #555;
-  }
+:global([data-theme="dark"]) .searchInput::placeholder {
+  color: #555;
+}
 
-  .clearBtn {
-    background: rgba(255, 255, 255, 0.08);
-    color: #666;
-  }
+:global([data-theme="dark"]) .clearBtn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #666;
+}
 
-  .clearBtn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #999;
-  }
+:global([data-theme="dark"]) .clearBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #999;
+}
 
-  .suggestions {
-    background: rgba(35, 35, 50, 0.9);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow:
-      0 8px 30px rgba(0, 0, 0, 0.3),
-      0 2px 8px rgba(0, 0, 0, 0.2);
-  }
+:global([data-theme="dark"]) .suggestions {
+  background: rgba(35, 35, 50, 0.9);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+}
 
-  .suggestionItem:hover,
-  .suggestionActive {
-    background: rgba(102, 126, 234, 0.12);
-  }
+:global([data-theme="dark"]) .suggestionItem:hover,
+:global([data-theme="dark"]) .suggestionActive {
+  background: rgba(102, 126, 234, 0.12);
+}
 
-  .suggestionIcon {
-    color: #555;
-  }
+:global([data-theme="dark"]) .suggestionIcon {
+  color: #555;
+}
 
-  .suggestionActive .suggestionIcon {
-    color: #8b9cf7;
-  }
+:global([data-theme="dark"]) .suggestionActive .suggestionIcon {
+  color: #8b9cf7;
+}
 
-  .suggestionText {
-    color: #bbb;
-  }
+:global([data-theme="dark"]) .suggestionText {
+  color: #bbb;
+}
 
-  .suggestionActive .suggestionText {
-    color: #eee;
-  }
+:global([data-theme="dark"]) .suggestionActive .suggestionText {
+  color: #eee;
+}
 
-  .suggestionArrow {
-    color: #555;
-  }
+:global([data-theme="dark"]) .suggestionArrow {
+  color: #555;
+}
 
-  .suggestionItem:hover .suggestionArrow,
-  .suggestionActive .suggestionArrow {
-    color: #8b9cf7;
-  }
+:global([data-theme="dark"]) .suggestionItem:hover .suggestionArrow,
+:global([data-theme="dark"]) .suggestionActive .suggestionArrow {
+  color: #8b9cf7;
+}
 
-  .hint {
-    color: rgba(255, 255, 255, 0.15);
-  }
+:global([data-theme="dark"]) .hint {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* 快捷网页暗色 */
+:global([data-theme="dark"]) .shortcutLink:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:global([data-theme="dark"]) .shortcutIcon {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: #aaa;
+}
+
+:global([data-theme="dark"]) .shortcutLink:hover .shortcutIcon {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .shortcutName {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+:global([data-theme="dark"]) .shortcutAdd {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.3);
+}
+
+:global([data-theme="dark"]) .shortcutAdd:hover {
+  border-color: rgba(138, 180, 248, 0.4);
+  color: rgba(138, 180, 248, 0.7);
+  background: rgba(138, 180, 248, 0.08);
+}
+
+:global([data-theme="dark"]) .shortcutForm {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .shortcutInput {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: #eee;
+}
+
+:global([data-theme="dark"]) .shortcutInput::placeholder {
+  color: #666;
+}
+
+:global([data-theme="dark"]) .editForm {
+  background: rgba(40, 40, 55, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .editInput {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: #eee;
+}
+
+:global([data-theme="dark"]) .editCancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+}
+
+:global([data-theme="dark"]) .editCancel:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+:global([data-theme="dark"]) .shortcutActionBtn {
+  background: rgba(255, 255, 255, 0.06);
+  color: #888;
+}
+
+:global([data-theme="dark"]) .shortcutActionBtn:hover {
+  background: rgba(0, 122, 255, 0.15);
+  color: #5ac8fa;
+}
+
+:global([data-theme="dark"]) .shortcutActionBtn:last-child:hover {
+  background: rgba(255, 59, 48, 0.15);
+  color: #ff453a;
+}
+
+:global([data-theme="dark"]) .dragHandle {
+  color: rgba(255, 255, 255, 0.2);
 }

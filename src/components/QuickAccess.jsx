@@ -22,7 +22,7 @@ const SECTION_ICONS = {
 
 const MAX_SITES = 12
 
-export default function QuickAccess({ isEditMode, allCategories, onSiteContextMenu, siteStatusEnabled }) {
+export default function QuickAccess({ isEditMode, allCategories, onSiteContextMenu, siteStatusEnabled, hiddenCategories = [] }) {
   const scrollToCategory = (categoryId) => {
     const el = document.getElementById(`category-${categoryId}`)
     if (el) {
@@ -191,20 +191,22 @@ export default function QuickAccess({ isEditMode, allCategories, onSiteContextMe
             <h2 className={styles.title}>快捷入口</h2>
           </div>
 
-          {/* 分类快捷跳转按钮 */}
+          {/* 分类快捷跳转按钮 - 过滤隐藏的分类 */}
           {!isEditMode && allCategories.length > 0 && (
             <div className={styles.catShortcuts}>
-              {allCategories.map(cat => (
-                <button
-                  key={cat.id}
-                  className={styles.catShortcutBtn}
-                  onClick={() => scrollToCategory(cat.id)}
-                  title={cat.name}
-                >
-                  <span className={styles.catShortcutIcon}>{cat.name.charAt(0)}</span>
-                  <span className={styles.catShortcutName}>{cat.name}</span>
-                </button>
-              ))}
+              {allCategories
+                .filter(cat => !hiddenCategories.includes(cat.id))
+                .map(cat => (
+                  <button
+                    key={cat.id}
+                    className={styles.catShortcutBtn}
+                    onClick={() => scrollToCategory(cat.id)}
+                    title={cat.name}
+                  >
+                    <span className={styles.catShortcutIcon}>{cat.name.charAt(0)}</span>
+                    <span className={styles.catShortcutName}>{cat.name}</span>
+                  </button>
+                ))}
             </div>
           )}
         </div>

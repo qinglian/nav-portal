@@ -22,13 +22,12 @@ function generateColor(url) {
   return `hsl(${h}, 70%, 55%)`
 }
 
-export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandleProps, onContextMenu, siteStatusEnabled = true }) {
+export default function SiteCard({ site, isEditMode, onEdit, onDelete, onContextMenu, siteStatusEnabled = true, dragOver, onDragStart, onDragEnd }) {
   const [iconError, setIconError] = useState(false)
   const [siteStatus, setSiteStatus] = useState(null)
   const [showStatus, setShowStatus] = useState(false)
   const cardRef = useRef(null)
-  
-  // 优先使用自定义图标URL，否则自动获取favicon
+
   const iconUrl = site.iconUrl || getAutoFaviconUrl(site.url)
   const fallbackColor = generateColor(site.url)
 
@@ -65,19 +64,17 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
     return () => card.removeEventListener('contextmenu', handleContextMenu)
   }, [site, onContextMenu])
 
-  // 只有开启检测且已获取状态时，才显示离线样式
   const shouldShowOffline = siteStatusEnabled && siteStatus && siteStatus.online === false && !siteStatus.unknown
   const shouldShowUnknown = siteStatusEnabled && siteStatus && siteStatus.unknown === true
 
   return (
     <div
       ref={cardRef}
-      className={`${styles.card} ${shouldShowOffline ? styles.cardOffline : ''}`}
+      className={`${styles.card} ${shouldShowOffline ? styles.cardOffline : ''} ${dragOver ? styles.dragOver : ''}`}
       data-site-card="true"
       onClick={handleClick}
       title={shouldShowOffline ? '该网站暂时无法访问' : shouldShowUnknown ? '状态未知（可能需要VPN）' : site.url}
     >
-      {/* 状态小圆点 - 仅在开启检测且非编辑模式时显示 */}
       {siteStatusEnabled && showStatus && !isEditMode && (
         <div
           className={`${styles.statusDot} ${
@@ -88,12 +85,6 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
         />
       )}
 
-      {isEditMode && (
-        <div className={styles.dragHandle} {...dragHandleProps}>
-          <GripVertical size={12} />
-        </div>
-      )}
-
       <div className={`${styles.iconWrapper} ${shouldShowOffline ? styles.iconWrapperOffline : ''}`} style={{ background: fallbackColor }}>
         {iconUrl && !iconError ? (
           <img
@@ -102,6 +93,7 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
             className={styles.icon}
             onError={() => setIconError(true)}
             loading="lazy"
+            draggable={false}
           />
         ) : (
           <div className={styles.fallbackIcon}>
@@ -116,14 +108,26 @@ export default function SiteCard({ site, isEditMode, onEdit, onDelete, dragHandl
       </div>
 
       {isEditMode && (
-        <div className={styles.actions}>
-          <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className={styles.actionBtn}>
-            <Edit2 size={12} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className={`${styles.actionBtn} ${styles.deleteBtn}`}>
-            <Trash2 size={12} />
-          </button>
-        </div>
+        <>
+          <div className={styles.dragHandle}
+            onMouseDown={(e) => {
+              // 阻止mousedown冒泡，避免触发card的点击
+              e.stopPropagation()
+            }}
+            onClick={(e) => e.stopPropagation()}
+            title="拖动排序"
+          >
+            <GripVertical size={12} />
+          </div>
+          <div className={styles.actions}>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className={styles.actionBtn}>
+              <Edit2 size={12} />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className={`${styles.actionBtn} ${styles.deleteBtn}`}>
+              <Trash2 size={12} />
+            </button>
+          </div>
+        </>
       )}
     </div>
   )

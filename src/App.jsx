@@ -18,6 +18,36 @@ import { recordSiteClick, addPinnedSite, removePinnedSite } from './utils/quickA
 import { getQuickAccessEnabled } from './utils/quickAccess'
 import styles from './App.module.css'
 
+const SITE_TITLE_KEY = 'nav-site-title'
+const SITE_SUBTITLE_KEY = 'nav-site-subtitle'
+const HIDDEN_CATEGORIES_KEY = 'nav-hidden-categories'
+
+function getSiteTitle() {
+  return localStorage.getItem(SITE_TITLE_KEY) || '清炼导航'
+}
+
+function getSiteSubtitle() {
+  return localStorage.getItem(SITE_SUBTITLE_KEY) || 'QingLian'
+}
+
+function saveSiteTitle(title) {
+  localStorage.setItem(SITE_TITLE_KEY, title)
+}
+
+function saveSiteSubtitle(subtitle) {
+  localStorage.setItem(SITE_SUBTITLE_KEY, subtitle)
+}
+
+function getHiddenCategories() {
+  const saved = localStorage.getItem(HIDDEN_CATEGORIES_KEY)
+  if (!saved) return []
+  try { return JSON.parse(saved) } catch { return [] }
+}
+
+function saveHiddenCategories(list) {
+  localStorage.setItem(HIDDEN_CATEGORIES_KEY, JSON.stringify(list))
+}
+
 function AppContent() {
   const { data, addCategory, updateCategory, deleteCategory, addSite, updateSite, deleteSite, reorderSites, reorderCategories, reorderTags } = useData()
   const { theme } = useTheme()
@@ -40,6 +70,13 @@ function AppContent() {
     categoryTags: []
   })
 
+  // 网站标题
+  const [siteTitle, setSiteTitle] = useState(() => getSiteTitle())
+  const [siteSubtitle, setSiteSubtitle] = useState(() => getSiteSubtitle())
+
+  // 隐藏的分类
+  const [hiddenCategories, setHiddenCategories] = useState(() => getHiddenCategories())
+
   // 监听快捷入口开关变化
   useEffect(() => {
     const handler = () => setQuickAccessEnabled(getQuickAccessEnabled())
@@ -56,6 +93,16 @@ function AppContent() {
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, site: null })
   // 全局二维码弹窗状态
   const [qrModal, setQrModal] = useState({ visible: false, site: null, dataUrl: '' })
+
+  // 分类拖动排序状态（使用 mouse events）
+  const [catDragId, setCatDragId] = useState(null)
+  const [catDropTargetId, setCatDropTargetId] = useState(null)
+  const catDragIdRef = useRef(null)
+
+  // 同步 ref 和 state
+  useEffect(() => {
+    catDragIdRef.current = catDragId
+  }, [catDragId])
 
   const switchToStart = () => {
     setCurrentView('start')
@@ -149,6 +196,12 @@ function AppContent() {
     })).filter(category => category.sites.length > 0)
   }, [data.categories, searchQuery])
 
+  // 过滤掉隐藏的分类（非编辑模式下）
+  const visibleCategories = useMemo(() => {
+    if (isEditMode) return filteredCategories
+    return filteredCategories.filter(cat => !hiddenCategories.includes(cat.id))
+  }, [filteredCategories, hiddenCategories, isEditMode])
+
   // Modal handlers
   const openAddSiteModal = (categoryId, categoryTags) => {
     setModalState({ isOpen: true, mode: 'site', data: null, categoryId, categoryTags })
@@ -189,6 +242,47 @@ function AppContent() {
     if (confirm('确定要删除这个分类吗？')) deleteCategory(categoryId)
   }
 
+  // 分类拖动排序 - 使用 mouse events（避免 HTML5 DnD 嵌套问题）
+  const handleCatDragStart = (catId) => {
+    setCatDragId(catId)
+    catDragIdRef.current = catId
+  }
+
+  const handleCatDragEnter = (catId) => {
+    const currentDragId = catDragIdRef.current
+    if (currentDragId && currentDragId !== catId) {
+      setCatDropTargetId(catId)
+      // 不再实时交换，只记录目标高亮
+    }
+  }
+
+  const handleCatDragEnd = (targetCatId) => {
+    const currentDragId = catDragIdRef.current
+    if (currentDragId && targetCatId && currentDragId !== targetCatId) {
+      // 松开时才执行排序
+      const cats = [...data.categories]
+      const fromIdx = cats.findIndex(c => c.id === currentDragId)
+      const toIdx = cats.findIndex(c => c.id === targetCatId)
+      if (fromIdx !== -1 && toIdx !== -1) {
+        const [moved] = cats.splice(fromIdx, 1)
+        cats.splice(toIdx, 0, moved)
+        reorderCategories(cats)
+      }
+    }
+    setCatDragId(null)
+    setCatDropTargetId(null)
+    catDragIdRef.current = null
+  }
+
+  // 切换分类隐藏状态
+  const handleToggleCategoryVisibility = (categoryId) => {
+    const newHidden = hiddenCategories.includes(categoryId)
+      ? hiddenCategories.filter(id => id !== categoryId)
+      : [...hiddenCategories, categoryId]
+    setHiddenCategories(newHidden)
+    saveHiddenCategories(newHidden)
+  }
+
   // 起始页
   if (currentView === 'start') {
     return (
@@ -220,6 +314,10 @@ function AppContent() {
         onToggleAnimatedBg={toggleAnimatedBg}
         onOpenEffectPicker={() => setShowEffectPicker(true)}
         onLogoClick={switchToStart}
+        siteTitle={siteTitle}
+        siteSubtitle={siteSubtitle}
+        onUpdateSiteTitle={(title) => { setSiteTitle(title); saveSiteTitle(title) }}
+        onUpdateSiteSubtitle={(subtitle) => { setSiteSubtitle(subtitle); saveSiteSubtitle(subtitle) }}
       />
 
       {showBgPicker && (
@@ -253,6 +351,7 @@ function AppContent() {
                 setContextMenu({ visible: true, x: e.clientX, y: e.clientY, site })
               }}
               siteStatusEnabled={siteStatusEnabled}
+              hiddenCategories={hiddenCategories}
             />
           )}
           {isEditMode && !searchQuery && (
@@ -262,7 +361,7 @@ function AppContent() {
             </button>
           )}
 
-          {filteredCategories.map((category, index) => (
+          {visibleCategories.map((category, index) => (
             <CategorySection
               key={category.id}
               category={category}
@@ -275,16 +374,23 @@ function AppContent() {
               onReorderSites={reorderSites}
               onReorderTags={reorderTags}
               onReorderCategories={reorderCategories}
+              onToggleCategoryVisibility={handleToggleCategoryVisibility}
               categoryIndex={index}
-              allCategories={filteredCategories}
+              allCategories={visibleCategories}
               onSiteContextMenu={(e, site) => {
                 setContextMenu({ visible: true, x: e.clientX, y: e.clientY, site })
               }}
               siteStatusEnabled={siteStatusEnabled}
+              isHidden={hiddenCategories.includes(category.id)}
+              catDragId={catDragId}
+              catDropTargetId={catDropTargetId}
+              onCatDragStart={handleCatDragStart}
+              onCatDragEnter={handleCatDragEnter}
+              onCatDragEnd={handleCatDragEnd}
             />
           ))}
 
-          {searchQuery && filteredCategories.length === 0 && (
+          {searchQuery && visibleCategories.length === 0 && (
             <div className={styles.noResults}>
               <p>没有找到匹配的网站</p>
               <button onClick={() => setSearchQuery('')} className={styles.clearSearchBtn}>
@@ -296,7 +402,7 @@ function AppContent() {
       </main>
 
       <footer className={styles.footer}>
-        <p>© 2024 清炼导航 · QingLian</p>
+        <p>© 2024 {siteTitle} · {siteSubtitle}</p>
       </footer>
 
       <EditModal

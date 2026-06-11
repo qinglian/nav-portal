@@ -179,6 +179,81 @@
   border-color: #ff3b30;
 }
 
+/* 隐藏按钮 */
+.hideBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--text-secondary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid var(--glass-border);
+}
+
+.hideBtn:hover:not(.hideBtnActive) {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* 隐藏状态 - 点亮 */
+.hideBtnActive {
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+
+.hideBtnActive:hover {
+  background: #d97706;
+  border-color: #d97706;
+}
+
+/* 分类拖动按钮 */
+.catDragHandle {
+  color: var(--text-tertiary);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  margin-right: 6px;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.catDragHandle:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.catDragHandle:active {
+  cursor: grabbing;
+}
+
+/* 分类拖动时的源样式 */
+.catDragging .container {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+/* 分类拖动时的目标位置高亮 */
+.catDropTarget .container {
+  transform: scale(1.01);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2), var(--shadow-glass);
+}
+
 /* 子分类标签 - 毛玻璃圆角矩形 + 水滴吸附动效 */
 .tagContainer {
   margin-bottom: 12px;
@@ -246,6 +321,13 @@
 
 .tagDraggable:active {
   cursor: grabbing;
+}
+
+/* 标签拖动时的目标位置高亮 */
+.tagDragOver {
+  transform: scale(1.05);
+  transition: transform 0.15s ease;
+  color: var(--accent-primary) !important;
 }
 
 .tagDragIcon {

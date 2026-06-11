@@ -4,6 +4,12 @@
   flex-direction: column;
 }
 
+.headerSticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 .main {
   flex: 1;
 }
