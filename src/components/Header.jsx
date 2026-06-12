@@ -1,6 +1,6 @@
-import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon, Zap, Lock, Type } from 'lucide-react'
+import { Search, Moon, Sun, Image, Edit3, Check, Sparkles, Settings2, Activity, MapPin, Search as SearchIcon, Zap, Lock, Type, Monitor, Sunrise } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
-import { useTheme } from '../context/ThemeContext'
+import { useTheme, THEME_MODES } from '../context/ThemeContext'
 import DataManager from './DataManager'
 import { getSavedCity, saveCity as saveWeatherCity, searchCity, getWeatherEnabled, saveWeatherEnabled } from '../utils/weather'
 import { getQuickAccessEnabled, saveQuickAccessEnabled } from '../utils/quickAccess'
@@ -8,7 +8,7 @@ import { getSafeBoxEnabled, saveSafeBoxEnabled, clearSafeBoxPassword, getSafeBox
 import styles from './Header.module.css'
 
 export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch, onToggleBgMode, animatedBg, onToggleAnimatedBg, onOpenEffectPicker, onLogoClick, siteStatusEnabled, onToggleSiteStatus, siteTitle, siteSubtitle, onUpdateSiteTitle, onUpdateSiteSubtitle }) {
-  const { theme, toggleTheme } = useTheme()
+  const { theme, themeMode, setTheme } = useTheme()
   const [showSiteConfig, setShowSiteConfig] = useState(false)
   const [citySearch, setCitySearch] = useState('')
   const [cityResults, setCityResults] = useState([])
@@ -22,8 +22,10 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
   const [pageTitle, setPageTitle] = useState(() => document.title)
   const [actionsFixedPos, setActionsFixedPos] = useState(null)
   const [actionsWidth, setActionsWidth] = useState(0)
+  const [showThemePicker, setShowThemePicker] = useState(false)
   const actionsRef = useRef(null)
   const searchTimeoutRef = useRef(null)
+  const themePickerRef = useRef(null)
 
   // 编辑模式下获取按钮原始位置、宽度并固定悬浮
   useEffect(() => {
@@ -86,6 +88,21 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
     window.addEventListener('closeOtherMenus', handler)
     return () => window.removeEventListener('closeOtherMenus', handler)
   }, [])
+
+  // 点击外部关闭主题下拉栏
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (themePickerRef.current && !themePickerRef.current.contains(e.target)) {
+        setShowThemePicker(false)
+      }
+    }
+    if (showThemePicker) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showThemePicker])
 
   // 城市搜索
   const handleCitySearch = (value) => {
@@ -417,9 +434,54 @@ export default function Header({ isEditMode, onToggleEdit, searchQuery, onSearch
           <button className={styles.iconBtn} onClick={onToggleBgMode} title="切换背景">
             <Image size={16} />
           </button>
-          <button className={styles.iconBtn} onClick={toggleTheme} title="切换主题">
-            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-          </button>
+          <div className={styles.themePickerWrapper} ref={themePickerRef}>
+            <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); setShowThemePicker(!showThemePicker) }} title="主题模式">
+              {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
+            {showThemePicker && (
+              <div
+                className={styles.themeDropdown}
+                style={{
+                  background: theme === 'dark' ? 'rgba(28, 28, 32, 1)' : 'rgba(255, 255, 255, 1)',
+                  backdropFilter: 'blur(80px) saturate(300%)',
+                  WebkitBackdropFilter: 'blur(80px) saturate(300%)',
+                  borderColor: theme === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.5)',
+                  boxShadow: theme === 'dark'
+                    ? '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)'
+                    : '0 8px 32px rgba(0,0,0,0.12)',
+                }}
+              >
+                {[
+                  { mode: 'light', icon: <Sun size={14} />, label: '亮色模式' },
+                  { mode: 'dark', icon: <Moon size={14} />, label: '深色模式' },
+                  { mode: 'system', icon: <Monitor size={14} />, label: '跟随系统' },
+                  { mode: 'sunrise-sunset', icon: <Sunrise size={14} />, label: '日出日落' },
+                ].map(item => {
+                  const isActive = themeMode === item.mode
+                  return (
+                  <button
+                    key={item.mode}
+                    className={`${styles.themeOption} ${isActive ? styles.themeOptionActive : ''}`}
+                    onClick={() => { setTheme(item.mode); setShowThemePicker(false) }}
+                    style={{
+                      color: isActive
+                        ? (theme === 'dark' ? '#60a5fa' : '#007aff')
+                        : (theme === 'dark' ? '#ccc' : undefined),
+                      background: isActive
+                        ? (theme === 'dark' ? 'rgba(0, 122, 255, 0.25)' : 'rgba(0, 122, 255, 0.15)')
+                        : undefined,
+                      fontWeight: isActive ? 600 : undefined,
+                    }}
+                  >
+                    <span className={styles.themeOptionIcon}>{item.icon}</span>
+                    <span>{item.label}</span>
+                    {isActive && <span className={styles.themeOptionCheck}>✓</span>}
+                  </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

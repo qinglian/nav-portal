@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Globe, Plus, X, Search, Check } from 'lucide-react'
+import { Globe, Plus, X, Search } from 'lucide-react'
 import { getSafeBoxEnabled, verifySafeBoxPassword } from '../utils/safeBox'
 import SafeBox from './SafeBox'
 import styles from './SearchEnginePicker.module.css'
@@ -125,9 +125,6 @@ export default function SearchEnginePicker({ isEditMode }) {
           >
             <div className={styles.engineDot} style={{ background: engine.color || 'var(--accent-primary)' }} />
             <span className={styles.engineName}>{engine.name}</span>
-            {engine.id === currentEngine && (
-              <Check size={12} className={styles.checkIcon} />
-            )}
             {engine.id.startsWith('custom_') && (
               <button
                 className={styles.removeBtn}

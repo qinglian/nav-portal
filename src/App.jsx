@@ -11,11 +11,14 @@ import AnimatedBackground from './components/AnimatedBackground'
 import WallpaperPicker from './components/WallpaperPicker'
 import EffectPicker from './components/EffectPicker'
 import StartPage from './components/StartPage'
+import PageSidebar from './components/PageSidebar'
 import ContextMenu from './components/ContextMenu'
 import QRCode from 'qrcode'
 import { Plus, X } from 'lucide-react'
 import { recordSiteClick, addPinnedSite, removePinnedSite } from './utils/quickAccess'
 import { getQuickAccessEnabled } from './utils/quickAccess'
+import { getPages, getCurrentPageId, setCurrentPageId, addPage, updatePage, deletePage, reorderPages } from './utils/startPagePages'
+import { getSettings } from './utils/startPageSettings'
 import styles from './App.module.css'
 
 const SITE_TITLE_KEY = 'nav-site-title'
@@ -88,6 +91,46 @@ function AppContent() {
   const [currentView, setCurrentView] = useState(() => {
     return localStorage.getItem('nav-current-view') || 'nav'
   })
+
+  // 起始页多页管理
+  const [pages, setPages] = useState(() => getPages())
+  const [currentPageId, setCurrentPageIdState] = useState(() => getCurrentPageId())
+  const [pageSettings, setPageSettings] = useState(() => getSettings(getCurrentPageId()))
+
+  const refreshPageSettings = () => {
+    setPageSettings(getSettings(currentPageId))
+  }
+
+  const handlePageChange = (id) => {
+    setCurrentPageIdState(id)
+    setCurrentPageId(id)
+    setPageSettings(getSettings(id))
+  }
+
+  const handleAddPage = (name) => {
+    const newPage = addPage(name)
+    setPages(getPages())
+    handlePageChange(newPage.id)
+  }
+
+  const handleEditPage = (id, updates) => {
+    updatePage(id, updates)
+    setPages(getPages())
+  }
+
+  const handleDeletePage = (id) => {
+    deletePage(id)
+    const remaining = getPages()
+    setPages(remaining)
+    if (currentPageId === id && remaining.length > 0) {
+      handlePageChange(remaining[0].id)
+    }
+  }
+
+  const handleReorderPages = (newPages) => {
+    reorderPages(newPages)
+    setPages(getPages())
+  }
 
   // 全局右键菜单状态
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, site: null })
@@ -285,10 +328,22 @@ function AppContent() {
 
   // 起始页
   if (currentView === 'start') {
+    const showSidebar = pageSettings.pageSidebar?.visible !== false
     return (
       <div className={styles.app}>
         <AnimatedBackground enabled={animatedBg} theme={theme} effect={bgEffect} />
-        <StartPage onGoToNav={switchToNav} />
+        {showSidebar && (
+          <PageSidebar
+            pages={pages}
+            currentPageId={currentPageId}
+            onPageChange={handlePageChange}
+            onAddPage={handleAddPage}
+            onEditPage={handleEditPage}
+            onDeletePage={handleDeletePage}
+            onReorderPages={handleReorderPages}
+          />
+        )}
+        <StartPage key={currentPageId} onGoToNav={switchToNav} pageId={currentPageId} onSettingsChange={refreshPageSettings} />
       </div>
     )
   }

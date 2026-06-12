@@ -1,237 +1,176 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Search, ChevronDown, ArrowRight, Moon, Sun, Compass, Pencil, X, Plus } from 'lucide-react'
-import { useTheme } from '../context/ThemeContext'
+import { Search, ChevronDown, ArrowRight, Moon, Sun, Compass, Pencil, X, Plus, Settings, Monitor, Sunrise } from 'lucide-react'
+import { useTheme, THEME_MODES } from '../context/ThemeContext'
+import StartPageSettings from './StartPageSettings'
+import { getSettings } from '../utils/startPageSettings'
+import { getPageDataKey, getPages } from '../utils/startPagePages'
 import styles from './StartPage.module.css'
 
-const DEFAULT_ENGINES = [
-  { id: 'bing', name: '必应', url: 'https://www.bing.com/search?q=', color: '#008373', suggestApi: 'https://api.bing.com/qsonhs.aspx?q=' },
-  { id: 'google', name: '谷歌', url: 'https://www.google.com/search?q=', color: '#4285f4', suggestApi: '' },
-  { id: 'baidu', name: '百度', url: 'https://www.baidu.com/s?wd=', color: '#2932e1', suggestApi: 'https://suggestion.baidu.com/su?wd=' },
-  { id: 'metaso', name: '秘塔AI', url: 'https://metaso.cn/?q=', color: '#00b4d8', suggestApi: '' },
-  { id: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=', color: '#de5833', suggestApi: 'https://duckduckgo.com/ac/?q=' },
-  { id: 'sogou', name: '搜狗', url: 'https://www.sogou.com/web?query=', color: '#fb5100', suggestApi: '' },
-]
+const SHORTCUTS_KEY = 'nav-shortcuts'
 
-const TRENDING_SUGGESTS = [
-  'AI工具推荐', '今日热点新闻', '天气预报', '技术文档',
-  '在线翻译', '音乐排行榜', '电影推荐', '编程教程',
-  '健康饮食', '旅行攻略', '股票行情', '电子书推荐'
-]
-
-const DEFAULT_SHORTCUTS = [
-  { id: '1', name: 'GitHub', url: 'https://github.com', iconUrl: '' },
-  { id: '2', name: 'B站', url: 'https://www.bilibili.com', iconUrl: '' },
-  { id: '3', name: '知乎', url: 'https://www.zhihu.com', iconUrl: '' },
-  { id: '4', name: 'YouTube', url: 'https://www.youtube.com', iconUrl: '' },
-]
-
-const SHORTCUTS_KEY = 'nav-startpage-shortcuts'
-
-function getAutoFavicon(url) {
+function getSavedShortcuts(pageId = 'default') {
+  const key = getPageDataKey(pageId, SHORTCUTS_KEY)
+  const saved = localStorage.getItem(key)
+  if (!saved) return []
   try {
-    const urlObj = new URL(url)
-    return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`
+    return JSON.parse(saved)
   } catch {
-    return null
+    return []
   }
 }
 
-function getSavedShortcuts() {
-  const saved = localStorage.getItem(SHORTCUTS_KEY)
-  if (!saved) return [...DEFAULT_SHORTCUTS]
-  try { return JSON.parse(saved) } catch { return [...DEFAULT_SHORTCUTS] }
+function saveShortcuts(pageId, list) {
+  const key = getPageDataKey(pageId, SHORTCUTS_KEY)
+  localStorage.setItem(key, JSON.stringify(list))
 }
 
-function saveShortcuts(list) {
-  localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(list))
+const DEFAULT_ENGINES = [
+  { id: 'bing', name: '必应', url: 'https://www.bing.com/search?q=', color: '#008373' },
+  { id: 'google', name: '谷歌', url: 'https://www.google.com/search?q=', color: '#4285f4' },
+  { id: 'baidu', name: '百度', url: 'https://www.baidu.com/s?wd=', color: '#2932e1' },
+  { id: 'metaso', name: '秘塔AI', url: 'https://metaso.cn/?q=', color: '#00b4d8' },
+  { id: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=', color: '#de5833' },
+  { id: 'sogou', name: '搜狗', url: 'https://www.sogou.com/web?query=', color: '#fb5100' },
+]
+
+function getEngines() {
+  const saved = localStorage.getItem('nav-search-engines')
+  return saved ? JSON.parse(saved) : DEFAULT_ENGINES
 }
 
-export default function StartPage({ onGoToNav }) {
-  const { theme, toggleTheme } = useTheme()
-  const [engines, setEngines] = useState(() => {
-    const saved = localStorage.getItem('nav-search-engines')
-    return saved ? JSON.parse(saved) : DEFAULT_ENGINES
-  })
-  const [currentEngine, setCurrentEngine] = useState(() => {
-    return localStorage.getItem('nav-current-engine') || 'bing'
-  })
-  const [searchInput, setSearchInput] = useState('')
+function getCurrentEngineId() {
+  return localStorage.getItem('nav-current-engine') || 'bing'
+}
+
+export default function StartPage({ onGoToNav, pageId = 'default', onSettingsChange }) {
+  const { theme, themeMode, setTheme } = useTheme()
+  const [engines, setEngines] = useState(() => getEngines())
+  const [currentEngineId, setCurrentEngineId] = useState(() => getCurrentEngineId())
+  const [query, setQuery] = useState('')
   const [showEnginePicker, setShowEnginePicker] = useState(false)
-  const [suggestions, setSuggestions] = useState([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [activeSuggestion, setActiveSuggestion] = useState(-1)
-  const [greeting, setGreeting] = useState('')
-  const [shortcuts, setShortcuts] = useState(() => getSavedShortcuts())
+  const [showThemePicker, setShowThemePicker] = useState(false)
+  const [dateInfo, setDateInfo] = useState({ hour: 0, minute: 0, second: 0, month: '', day: 0, year: 0, weekday: '' })
+  const [shortcuts, setShortcuts] = useState(() => getSavedShortcuts(pageId))
   const [isEditShortcuts, setIsEditShortcuts] = useState(false)
   const [showAddShortcut, setShowAddShortcut] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [newShortcut, setNewShortcut] = useState({ name: '', url: '', iconUrl: '' })
   const [editShortcut, setEditShortcut] = useState({ name: '', url: '', iconUrl: '' })
+  const [showSettings, setShowSettings] = useState(false)
+  const [startSettings, setStartSettings] = useState(() => getSettings(pageId))
 
-  // 拖拽排序状态
+  // 设置变化回调（由设置弹窗调用）
+  const handleSettingsChange = (newSettings) => {
+    setStartSettings({ ...newSettings })
+    if (onSettingsChange) onSettingsChange()
+  }
+
   const [dragOverIndex, setDragOverIndex] = useState(null)
   const dragItemIndex = useRef(null)
   const dragItemData = useRef(null)
-
+  const searchRef = useRef(null)
   const inputRef = useRef(null)
-  const suggestTimer = useRef(null)
-  const pickerRef = useRef(null)
+  const themePickerRef = useRef(null)
+  const topBarRef = useRef(null)
 
-  useEffect(() => {
-    const hour = new Date().getHours()
-    if (hour < 6) setGreeting('夜深了')
-    else if (hour < 9) setGreeting('早上好')
-    else if (hour < 12) setGreeting('上午好')
-    else if (hour < 14) setGreeting('中午好')
-    else if (hour < 18) setGreeting('下午好')
-    else if (hour < 22) setGreeting('晚上好')
-    else setGreeting('夜深了')
-  }, [])
+  const freeLayoutEnabled = false
 
-  const [time, setTime] = useState(new Date())
+  // 更新时钟
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000)
+    const updateDate = () => {
+      const now = new Date()
+      const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+      const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+      setDateInfo({
+        hour: now.getHours(),
+        minute: now.getMinutes(),
+        second: now.getSeconds(),
+        month: months[now.getMonth()],
+        day: now.getDate(),
+        year: now.getFullYear(),
+        weekday: weekdays[now.getDay()],
+      })
+    }
+    updateDate()
+    const timer = setInterval(updateDate, 1000)
     return () => clearInterval(timer)
   }, [])
 
+  // 点击外部关闭主题下拉栏
   useEffect(() => {
-    const handleClick = (e) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
-        setShowEnginePicker(false)
+    const handleClickOutside = (e) => {
+      if (themePickerRef.current && !themePickerRef.current.contains(e.target)) {
+        setShowThemePicker(false)
       }
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  const fetchSuggestions = useMemo(() => (query) => {
-    if (!query.trim()) {
-      setSuggestions([])
-      setShowSuggestions(false)
-      return
+    if (showThemePicker) {
+      document.addEventListener('mousedown', handleClickOutside)
     }
-    const engine = engines.find(en => en.id === currentEngine)
-    if (!engine || !engine.suggestApi) {
-      const filtered = TRENDING_SUGGESTS.filter(s =>
-        s.toLowerCase().includes(query.toLowerCase())
-      )
-      setSuggestions(filtered.length > 0 ? filtered : [query])
-      setShowSuggestions(true)
-      return
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
     }
-    clearTimeout(suggestTimer.current)
-    suggestTimer.current = setTimeout(() => {
-      if (currentEngine === 'baidu') {
-        const callbackName = 'bdSuggest_' + Date.now()
-        window[callbackName] = (data) => {
-          const result = data.s ? data.s.slice(0, 8) : []
-          setSuggestions(result.length > 0 ? result : [query])
-          setShowSuggestions(true)
-          delete window[callbackName]
-        }
-        const script = document.createElement('script')
-        script.src = `${engine.suggestApi}${encodeURIComponent(query)}&cb=${callbackName}`
-        script.onerror = () => {
-          setSuggestions([query])
-          setShowSuggestions(true)
-          delete window[callbackName]
-        }
-        document.head.appendChild(script)
-        setTimeout(() => script.remove(), 5000)
-      } else {
-        const filtered = TRENDING_SUGGESTS.filter(s =>
-          s.toLowerCase().includes(query.toLowerCase())
-        )
-        setSuggestions(filtered.length > 0 ? filtered : [query])
-        setShowSuggestions(true)
-      }
-    }, 200)
-  }, [engines, currentEngine])
+  }, [showThemePicker])
 
-  const handleInputChange = (e) => {
-    const value = e.target.value
-    setSearchInput(value)
-    setActiveSuggestion(-1)
-    fetchSuggestions(value)
+  // 问候语
+  const greeting = useMemo(() => {
+    const h = dateInfo.hour
+    if (h < 6) return '夜深了，注意休息'
+    if (h < 9) return '早上好，开启美好的一天'
+    if (h < 12) return '上午好，工作愉快'
+    if (h < 14) return '中午好，记得午休'
+    if (h < 18) return '下午好，继续加油'
+    if (h < 22) return '晚上好，放松一下'
+    return '夜深了，注意休息'
+  }, [dateInfo.hour])
+
+  // 当前引擎对象
+  const activeEngine = engines.find(e => e.id === currentEngineId) || engines[0]
+
+  // 搜索引擎切换（同步到导航页）
+  const handleEngineChange = (engineId) => {
+    setCurrentEngineId(engineId)
+    localStorage.setItem('nav-current-engine', engineId)
+    setShowEnginePicker(false)
+    inputRef.current?.focus()
+  }
+
+  // 搜索
+  const handleSearch = () => {
+    if (!query.trim()) return
+    const url = activeEngine.url + encodeURIComponent(query)
+    window.open(url, '_blank')
+    setQuery('')
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActiveSuggestion(prev => Math.min(prev + 1, suggestions.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActiveSuggestion(prev => Math.max(prev - 1, -1))
-    } else if (e.key === 'Enter') {
-      if (activeSuggestion >= 0 && suggestions[activeSuggestion]) {
-        setSearchInput(suggestions[activeSuggestion])
-        doSearch(suggestions[activeSuggestion])
-      } else {
-        doSearch(searchInput)
-      }
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false)
-      setShowEnginePicker(false)
+    if (e.key === 'Enter') {
+      handleSearch()
     }
   }
 
-  const doSearch = (query) => {
-    if (!query || !query.trim()) return
-    const engine = engines.find(en => en.id === currentEngine)
-    if (engine) {
-      window.open(engine.url + encodeURIComponent(query.trim()), '_blank')
-    }
-    setShowSuggestions(false)
-  }
-
-  const selectSuggestion = (suggestion) => {
-    setSearchInput(suggestion)
-    setShowSuggestions(false)
-    doSearch(suggestion)
-  }
-
-  const selectEngine = (id) => {
-    setCurrentEngine(id)
-    localStorage.setItem('nav-current-engine', id)
-    setShowEnginePicker(false)
-    if (searchInput) fetchSuggestions(searchInput)
-  }
-
-  const activeEngine = engines.find(en => en.id === currentEngine) || engines[0]
-
-  const formatDate = (date) => {
-    const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
-    const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
-    return {
-      year: date.getFullYear(),
-      month: months[date.getMonth()],
-      day: date.getDate(),
-      weekday: days[date.getDay()],
-      hour: date.getHours(),
-      minute: date.getMinutes(),
-      second: date.getSeconds(),
-    }
-  }
-
-  const dateInfo = formatDate(time)
-
-  // 快捷网页操作
+  // 快捷网页管理
   const handleAddShortcut = () => {
     if (!newShortcut.name.trim() || !newShortcut.url.trim()) return
-    let url = newShortcut.url.trim()
-    if (!url.startsWith('http')) url = 'https://' + url
+    const url = newShortcut.url.startsWith('http') ? newShortcut.url : 'https://' + newShortcut.url
     const iconUrl = newShortcut.iconUrl.trim() || ''
-    const list = [...shortcuts, { id: Date.now().toString(), name: newShortcut.name.trim(), url, iconUrl }]
-    setShortcuts(list)
-    saveShortcuts(list)
+    const item = {
+      id: Date.now().toString(),
+      name: newShortcut.name.trim(),
+      url,
+      iconUrl,
+      pos: undefined,
+    }
+    const updated = [...shortcuts, item]
+    setShortcuts(updated)
+    saveShortcuts(pageId, updated)
     setNewShortcut({ name: '', url: '', iconUrl: '' })
     setShowAddShortcut(false)
   }
 
   const handleRemoveShortcut = (id) => {
-    const list = shortcuts.filter(s => s.id !== id)
-    setShortcuts(list)
-    saveShortcuts(list)
+    const updated = shortcuts.filter((s) => s.id !== id)
+    setShortcuts(updated)
+    saveShortcuts(pageId, updated)
   }
 
   const startEdit = (site) => {
@@ -241,25 +180,32 @@ export default function StartPage({ onGoToNav }) {
 
   const saveEdit = () => {
     if (!editShortcut.name.trim() || !editShortcut.url.trim()) return
-    let url = editShortcut.url.trim()
-    if (!url.startsWith('http')) url = 'https://' + url
-    const list = shortcuts.map(s =>
+    const updated = shortcuts.map((s) =>
       s.id === editingId
-        ? { ...s, name: editShortcut.name.trim(), url, iconUrl: editShortcut.iconUrl.trim() || '' }
+        ? { ...s, name: editShortcut.name.trim(), url: editShortcut.url.startsWith('http') ? editShortcut.url : 'https://' + editShortcut.url, iconUrl: editShortcut.iconUrl.trim() || '' }
         : s
     )
-    setShortcuts(list)
-    saveShortcuts(list)
+    setShortcuts(updated)
+    saveShortcuts(pageId, updated)
     setEditingId(null)
   }
 
-  // ========== 拖拽排序 - 实时预览 ==========
+  const getIconUrl = (site) => {
+    if (site.iconUrl) return site.iconUrl
+    try {
+      const domain = new URL(site.url).hostname
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`
+    } catch {
+      return ''
+    }
+  }
+
+  // 拖拽排序
   const handleDragStart = (e, index) => {
     if (!isEditShortcuts) return
     dragItemIndex.current = index
     dragItemData.current = shortcuts[index]
     e.dataTransfer.effectAllowed = 'move'
-    // 设置拖拽时的透明图像（隐藏默认的）
     const img = new Image()
     img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
     e.dataTransfer.setDragImage(img, 0, 0)
@@ -269,45 +215,95 @@ export default function StartPage({ onGoToNav }) {
     if (!isEditShortcuts || dragItemIndex.current === null) return
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
-    if (dragOverIndex !== index) {
-      setDragOverIndex(index)
-      // 实时交换位置
-      if (dragItemIndex.current !== index) {
-        const newList = [...shortcuts]
-        const [moved] = newList.splice(dragItemIndex.current, 1)
-        newList.splice(index, 0, moved)
-        setShortcuts(newList)
-        dragItemIndex.current = index
+
+    if (freeLayoutEnabled) {
+      // 自由布局：吸附到网格（40px 网格）
+      const wrapper = e.currentTarget.parentElement
+      const rect = wrapper.getBoundingClientRect()
+      const rawX = e.clientX - rect.left - 40
+      const rawY = e.clientY - rect.top - 40
+      const gridSize = 40
+      const x = Math.round(Math.max(0, rawX) / gridSize) * gridSize
+      const y = Math.round(Math.max(0, rawY) / gridSize) * gridSize
+
+      const newShortcuts = shortcuts.map((s, i) => {
+        if (i === dragItemIndex.current) {
+          return { ...s, pos: { x, y } }
+        }
+        return s
+      })
+      setShortcuts(newShortcuts)
+    } else {
+      // 普通模式：交换位置
+      if (dragOverIndex !== index) {
+        setDragOverIndex(index)
+        if (dragItemIndex.current !== index) {
+          const newList = [...shortcuts]
+          const [moved] = newList.splice(dragItemIndex.current, 1)
+          newList.splice(index, 0, moved)
+          setShortcuts(newList)
+          dragItemIndex.current = index
+        }
       }
     }
   }
 
   const handleDragLeaveItem = (e) => {
-    // 不需要处理，因为 dragOver 已经处理了实时交换
+    // 不需要处理
   }
 
   const handleDragEnd = (e) => {
     dragItemIndex.current = null
     dragItemData.current = null
     setDragOverIndex(null)
-    // 保存最终状态
-    saveShortcuts(shortcuts)
-  }
-
-  const getIconUrl = (site) => {
-    if (site.iconUrl) return site.iconUrl
-    return getAutoFavicon(site.url)
+    saveShortcuts(pageId, shortcuts)
   }
 
   return (
-    <div className={styles.startPage}>
-      {/* 右上角工具栏 */}
-      <div className={styles.topBar}>
-        <button className={styles.topBtn} onClick={toggleTheme} title={theme === 'dark' ? '切换亮色' : '切换暗色'}>
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-        </button>
-        <button className={styles.topBtn} onClick={() => setIsEditShortcuts(!isEditShortcuts)} title="编辑快捷网页">
+    <div className={`${styles.container} ${shortcuts.length === 0 ? styles.containerCentered : ''}`}>
+      {/* 顶部工具栏 */}
+      <div className={`${styles.topBar} ${isEditShortcuts ? styles.topBarVisible : ''}`}
+        ref={topBarRef}
+        onMouseLeave={() => setShowThemePicker(false)}
+      >
+        <div className={styles.themePickerWrapper} ref={themePickerRef}>
+          <button className={styles.topBtn} onClick={(e) => { e.stopPropagation(); setShowThemePicker(!showThemePicker) }} title="主题模式">
+            {theme === 'dark' ? <Moon size={15} /> : <Sun size={15} />}
+          </button>
+          {showThemePicker && (
+            <div className={styles.themeDropdown}>
+              {[
+                { mode: 'light', icon: <Sun size={14} />, label: '亮色模式' },
+                { mode: 'dark', icon: <Moon size={14} />, label: '深色模式' },
+                { mode: 'system', icon: <Monitor size={14} />, label: '跟随系统' },
+                { mode: 'sunrise-sunset', icon: <Sunrise size={14} />, label: '日出日落' },
+              ].map(item => (
+                <button
+                  key={item.mode}
+                  className={`${styles.themeOption} ${themeMode === item.mode ? styles.themeOptionActive : ''}`}
+                  onClick={() => { setTheme(item.mode); setShowThemePicker(false) }}
+                >
+                  <span className={styles.themeOptionIcon}>{item.icon}</span>
+                  <span>{item.label}</span>
+                  {themeMode === item.mode && <span className={styles.themeOptionCheck}>✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          className={`${styles.topBtn} ${isEditShortcuts ? styles.topBtnActive : ''}`}
+          onClick={() => setIsEditShortcuts(!isEditShortcuts)}
+          title={isEditShortcuts ? '完成编辑' : '编辑快捷网页'}
+        >
           <Pencil size={15} />
+        </button>
+        <button
+          className={styles.topBtn}
+          onClick={() => setShowSettings(true)}
+          title="起始页设置"
+        >
+          <Settings size={15} />
         </button>
         <button className={styles.navBtn} onClick={onGoToNav}>
           <Compass size={15} />
@@ -315,12 +311,13 @@ export default function StartPage({ onGoToNav }) {
         </button>
       </div>
 
-      {/* 中间内容 */}
-      <div className={styles.centerContent}>
-        {/* 问候语 */}
+      {/* 问候语 - 跟随时间显示 */}
+      {startSettings.timeWidget?.visible !== false && (
         <div className={styles.greeting}>{greeting}</div>
+      )}
 
-        {/* 时间日期 */}
+      {/* 时间日期 */}
+      {startSettings.timeWidget?.visible !== false && (
         <div className={styles.timeSection}>
           <div className={styles.time}>
             <span className={styles.timeHour}>{String(dateInfo.hour).padStart(2, '0')}</span>
@@ -334,11 +331,13 @@ export default function StartPage({ onGoToNav }) {
             <span>{dateInfo.weekday}</span>
           </div>
         </div>
+      )}
 
-        {/* 搜索框 */}
+      {/* 搜索框 */}
+      {startSettings.searchBox?.visible !== false && (
         <div className={styles.searchWrapper}>
           <div className={styles.searchBox}>
-            <div className={styles.engineSelector} ref={pickerRef}>
+            <div className={styles.engineSelector}>
               <button className={styles.engineBtn} onClick={() => setShowEnginePicker(!showEnginePicker)}>
                 <span className={styles.engineDot} style={{ background: activeEngine?.color }} />
                 <span className={styles.engineName}>{activeEngine?.name}</span>
@@ -347,10 +346,10 @@ export default function StartPage({ onGoToNav }) {
               {showEnginePicker && (
                 <div className={styles.engineDropdown}>
                   {engines.map(engine => (
-                    <button key={engine.id} className={`${styles.engineOption} ${engine.id === currentEngine ? styles.engineOptionActive : ''}`} onClick={() => selectEngine(engine.id)}>
+                    <button key={engine.id} className={`${styles.engineOption} ${engine.id === currentEngineId ? styles.engineOptionActive : ''}`} onClick={() => handleEngineChange(engine.id)}>
                       <span className={styles.engineDot} style={{ background: engine.color }} />
                       <span>{engine.name}</span>
-                      {engine.id === currentEngine && <span className={styles.engineCheck}>✓</span>}
+                      {engine.id === currentEngineId && <span className={styles.engineCheck}>✓</span>}
                     </button>
                   ))}
                 </div>
@@ -358,46 +357,55 @@ export default function StartPage({ onGoToNav }) {
             </div>
             <div className={styles.inputWrapper}>
               <Search size={18} className={styles.searchIcon} />
-              <input ref={inputRef} type="text" value={searchInput} onChange={handleInputChange} onKeyDown={handleKeyDown} onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }} placeholder={`使用 ${activeEngine?.name || '搜索引擎'} 搜索...`} className={styles.searchInput} autoComplete="off" />
-              {searchInput && (
-                <button className={styles.clearBtn} onClick={() => { setSearchInput(''); setSuggestions([]); setShowSuggestions(false) }}>×</button>
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={`使用 ${activeEngine?.name || '搜索引擎'} 搜索...`}
+                className={styles.searchInput}
+                autoComplete="off"
+              />
+              {query && (
+                <button className={styles.clearBtn} onClick={() => setQuery('')}>×</button>
               )}
             </div>
-            {showSuggestions && suggestions.length > 0 && (
-              <div className={styles.suggestions}>
-                {suggestions.map((suggestion, index) => (
-                  <div key={index} className={`${styles.suggestionItem} ${index === activeSuggestion ? styles.suggestionActive : ''}`} onClick={() => selectSuggestion(suggestion)} onMouseEnter={() => setActiveSuggestion(index)}>
-                    <Search size={14} className={styles.suggestionIcon} />
-                    <span className={styles.suggestionText}>{suggestion}</span>
-                    <ArrowRight size={12} className={styles.suggestionArrow} />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
+      )}
 
-        {/* 快捷网页 */}
-        <div className={styles.shortcutsWrapper}>
-          <div className={styles.shortcutsList}>
-            {shortcuts.map((site, index) => (
+      {/* 快捷网页 */}
+      <div className={styles.shortcutsWrapper}>
+        <div className={`${styles.shortcutsList} ${freeLayoutEnabled ? styles.shortcutsFreeMode : ''} ${freeLayoutEnabled && isEditShortcuts ? styles.shortcutsFreeModeEdit : ''}`}>
+          {shortcuts.map((site, index) => {
+            const pos = freeLayoutEnabled && site.pos ? site.pos : null
+            return (
               <div
                 key={site.id}
-                className={`${styles.shortcutItem} ${isEditShortcuts ? styles.shortcutItemDraggable : ''} ${dragOverIndex === index ? styles.dragOver : ''}`}
-                draggable={isEditShortcuts}
+                className={`${styles.shortcutItem} ${isEditShortcuts ? styles.shortcutItemDraggable : ''} ${dragOverIndex === index ? styles.dragOver : ''} ${pos ? styles.shortcutItemFree : ''}`}
+                style={pos ? { left: pos.x, top: pos.y } : undefined}
+                draggable={isEditShortcuts && editingId !== site.id}
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragOver={(e) => handleDragOverItem(e, index)}
                 onDragLeave={handleDragLeaveItem}
                 onDragEnd={handleDragEnd}
               >
                 {editingId === site.id ? (
-                  <div className={styles.editForm} onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className={styles.editForm}
+                    onClick={(e) => e.stopPropagation()}
+                    onDragStart={(e) => e.preventDefault()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrag={(e) => e.preventDefault()}
+                  >
                     <input
                       type="text"
                       value={editShortcut.name}
                       onChange={(e) => setEditShortcut({ ...editShortcut, name: e.target.value })}
                       placeholder="名称"
                       className={styles.editInput}
+                      draggable={false}
                     />
                     <input
                       type="text"
@@ -405,6 +413,7 @@ export default function StartPage({ onGoToNav }) {
                       onChange={(e) => setEditShortcut({ ...editShortcut, url: e.target.value })}
                       placeholder="网址"
                       className={styles.editInput}
+                      draggable={false}
                     />
                     <input
                       type="text"
@@ -412,6 +421,7 @@ export default function StartPage({ onGoToNav }) {
                       onChange={(e) => setEditShortcut({ ...editShortcut, iconUrl: e.target.value })}
                       placeholder="图标URL（可选）"
                       className={styles.editInput}
+                      draggable={false}
                     />
                     <div className={styles.editActions}>
                       <button className={styles.editCancel} onClick={() => setEditingId(null)}>取消</button>
@@ -454,28 +464,35 @@ export default function StartPage({ onGoToNav }) {
                   </>
                 )}
               </div>
-            ))}
-            {isEditShortcuts && (
-              <button className={styles.shortcutAdd} onClick={() => setShowAddShortcut(!showAddShortcut)} title="添加快捷网页">
-                <Plus size={18} />
-              </button>
-            )}
-          </div>
-          {isEditShortcuts && showAddShortcut && (
-            <div className={styles.shortcutForm}>
-              <input type="text" placeholder="名称" value={newShortcut.name} onChange={(e) => setNewShortcut({ ...newShortcut, name: e.target.value })} className={styles.shortcutInput} />
-              <input type="text" placeholder="网址" value={newShortcut.url} onChange={(e) => setNewShortcut({ ...newShortcut, url: e.target.value })} className={styles.shortcutInput} />
-              <input type="text" placeholder="图标URL（可选，留空自动获取）" value={newShortcut.iconUrl} onChange={(e) => setNewShortcut({ ...newShortcut, iconUrl: e.target.value })} className={styles.shortcutInput} />
-              <button className={styles.shortcutConfirm} onClick={handleAddShortcut}>添加</button>
-            </div>
+            )
+          })}
+          {isEditShortcuts && (
+            <button className={styles.shortcutAdd} onClick={() => setShowAddShortcut(!showAddShortcut)} title="添加快捷网页">
+              <Plus size={18} />
+            </button>
           )}
         </div>
-
-        {/* 快捷提示 */}
-        <div className={styles.hint}>
-          输入关键词搜索 · 按 Enter 快速搜索 · 按 ↑↓ 选择建议
-        </div>
+        {isEditShortcuts && showAddShortcut && (
+          <div className={styles.shortcutForm}>
+            <input type="text" placeholder="名称" value={newShortcut.name} onChange={(e) => setNewShortcut({ ...newShortcut, name: e.target.value })} className={styles.shortcutInput} />
+            <input type="text" placeholder="网址" value={newShortcut.url} onChange={(e) => setNewShortcut({ ...newShortcut, url: e.target.value })} className={styles.shortcutInput} />
+            <input type="text" placeholder="图标URL（可选，留空自动获取）" value={newShortcut.iconUrl} onChange={(e) => setNewShortcut({ ...newShortcut, iconUrl: e.target.value })} className={styles.shortcutInput} />
+            <button className={styles.shortcutConfirm} onClick={handleAddShortcut}>添加</button>
+          </div>
+        )}
       </div>
+
+      {/* 快捷提示 - 跟随搜索框 */}
+      {startSettings.searchBox?.visible !== false && (
+        <div className={styles.hint}>
+          输入关键词搜索 · 按 Enter 快速搜索
+        </div>
+      )}
+
+      {/* 设置弹窗 */}
+      {showSettings && (
+        <StartPageSettings onClose={() => setShowSettings(false)} onSettingsChange={handleSettingsChange} pageId={pageId} pageName={getPages().find(p => p.id === pageId)?.name} />
+      )}
     </div>
   )
 }

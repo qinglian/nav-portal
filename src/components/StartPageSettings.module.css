@@ -1,0 +1,491 @@
+.overlayWrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  position: relative;
+  width: 560px;
+  max-width: 90vw;
+  height: 420px;
+  max-height: 80vh;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 130px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--glass-border);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.categoryBtn {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.categoryBtn:hover {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+}
+
+.categoryActive {
+  background: var(--accent-gradient);
+  color: white;
+}
+
+.categoryActive:hover {
+  background: var(--accent-gradient);
+  color: white;
+  opacity: 0.9;
+}
+
+.content {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+.settingsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.groupTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.settingItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+.groupDesc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: -4px 0 12px;
+}
+
+/* 搜索引擎列表 */
+.engineList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.engineItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  cursor: grab;
+  transition: all 0.15s ease;
+  gap: 8px;
+}
+
+.engineItem:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.engineItemDragging {
+  opacity: 0.5;
+  background: rgba(0, 122, 255, 0.06);
+  border-color: rgba(0, 122, 255, 0.15);
+}
+
+.engineItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.gripIcon {
+  color: var(--text-tertiary);
+  cursor: grab;
+}
+
+.engineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.engineItemName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.engineItemRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.engineItemUrl {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.engineRemoveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.engineRemoveBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.engineEditBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.engineEditBtn:hover {
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+}
+
+.engineEditForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.engineEditActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* 添加搜索引擎 */
+.addEngineBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed rgba(0, 0, 0, 0.12);
+  background: transparent;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.addEngineBtn:hover {
+  border-color: rgba(0, 122, 255, 0.3);
+  color: #007aff;
+  background: rgba(0, 122, 255, 0.04);
+}
+
+.addEngineForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.addEngineInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.addEngineInput:focus {
+  border-color: rgba(0, 122, 255, 0.4);
+}
+
+.addEngineActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.addEngineCancel {
+  padding: 6px 14px;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.addEngineCancel:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.addEngineConfirm {
+  padding: 6px 14px;
+  border: none;
+  background: #007aff;
+  border-radius: 8px;
+  font-size: 13px;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.addEngineConfirm:hover {
+  background: #0066d6;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggleLabel {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border: none;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.toggleOn {
+  background: var(--accent-primary);
+}
+
+.toggleOff {
+  background: var(--glass-border);
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggleOn .toggleThumb {
+  transform: translateX(18px);
+}
+
+/* ==================== 深色模式适配 ==================== */
+:global([data-theme="dark"]) .engineItem {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+:global([data-theme="dark"]) .engineItem:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+:global([data-theme="dark"]) .engineItemDragging {
+  background: rgba(0, 122, 255, 0.1);
+  border-color: rgba(0, 122, 255, 0.2);
+}
+
+:global([data-theme="dark"]) .addEngineBtn {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+:global([data-theme="dark"]) .addEngineBtn:hover {
+  border-color: rgba(0, 122, 255, 0.4);
+  color: #4da3ff;
+  background: rgba(0, 122, 255, 0.08);
+}
+
+:global([data-theme="dark"]) .addEngineForm {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global([data-theme="dark"]) .addEngineInput {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+:global([data-theme="dark"]) .addEngineInput:focus {
+  border-color: rgba(0, 122, 255, 0.5);
+}
+
+:global([data-theme="dark"]) .addEngineCancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+:global([data-theme="dark"]) .addEngineCancel:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+:global([data-theme="dark"]) .engineRemoveBtn:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+:global([data-theme="dark"]) .engineEditBtn:hover {
+  background: rgba(0, 122, 255, 0.15);
+}
+
+:global([data-theme="dark"]) .toggleThumb {
+  background: #e0e0e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}

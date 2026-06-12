@@ -1,5 +1,5 @@
 /* ==================== 起始页容器 ==================== */
-.startPage {
+.container {
   position: fixed;
   inset: 0;
   display: flex;
@@ -7,8 +7,14 @@
   align-items: center;
   justify-content: flex-start;
   padding-top: 12.5vh;
+  gap: 16px;
   z-index: 50;
   animation: fadeIn 0.5s ease;
+}
+
+/* 无快捷按钮时，内容整体下移一点 */
+.containerCentered {
+  padding-top: 25vh;
 }
 
 @keyframes fadeIn {
@@ -21,7 +27,8 @@
   position: fixed;
   top: 0;
   right: 0;
-  width: 220px;
+  width: auto;
+  min-width: 280px;
   height: 80px;
   display: flex;
   align-items: flex-start;
@@ -36,13 +43,14 @@
   flex-wrap: nowrap;
 }
 
-/* 只有鼠标划过右上角区域时才显示按钮 */
-.topBar:hover {
+/* 鼠标划过或编辑模式时显示 */
+.topBar:hover,
+.topBarVisible {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* 按钮默认不可见但可交互（用于hover触发） */
+/* 按钮默认不可见但可交互 */
 .topBar .topBtn,
 .topBar .navBtn {
   opacity: 0;
@@ -51,7 +59,9 @@
 }
 
 .topBar:hover .topBtn,
-.topBar:hover .navBtn {
+.topBar:hover .navBtn,
+.topBarVisible .topBtn,
+.topBarVisible .navBtn {
   opacity: 1;
   transform: translateY(0);
 }
@@ -61,7 +71,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -70,11 +80,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.08),
     0 1px 3px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.5);
   transition: all 0.25s ease;
 }
 
@@ -85,6 +95,14 @@
     0 6px 25px rgba(0, 0, 0, 0.12),
     0 2px 6px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* 编辑模式激活状态 */
+.topBtnActive {
+  background: var(--accent-gradient) !important;
+  color: white !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 12px rgba(0, 122, 255, 0.4) !important;
 }
 
 /* 导航按钮 -  pill 形状 */
@@ -117,6 +135,85 @@
     0 2px 6px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transform: translateY(-1px);
+}
+
+/* 主题选择器 */
+.themePickerWrapper {
+  position: relative;
+}
+
+.themeDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 150px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  z-index: 200;
+  animation: fadeIn 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.themeOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.themeOption:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.themeOptionActive {
+  background: rgba(0, 122, 255, 0.15);
+  color: #007aff;
+  font-weight: 600;
+}
+
+.themeOptionIcon {
+  display: flex;
+  align-items: center;
+}
+
+.themeOptionCheck {
+  margin-left: auto;
+  font-size: 12px;
+  color: #007aff;
+}
+
+:global([data-theme="dark"]) .themeDropdown {
+  background: rgba(40, 40, 40, 0.92);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global([data-theme="dark"]) .themeOption {
+  color: #ccc;
+}
+
+:global([data-theme="dark"]) .themeOption:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+:global([data-theme="dark"]) .themeOptionActive {
+  background: rgba(0, 122, 255, 0.15);
+  color: #4da3ff;
 }
 
 /* ==================== 中间内容 ==================== */
@@ -208,6 +305,7 @@
   width: 36vw;
   max-width: none;
   padding: 0;
+  margin-top: 16px;
   animation: slideUp 0.6s ease 0.2s both;
 }
 
@@ -480,6 +578,29 @@
   justify-content: center;
   gap: 14px;
   max-width: 600px;
+}
+
+/* 自由布局容器 */
+.shortcutsFreeMode {
+  position: relative;
+  width: 100%;
+  min-height: 300px;
+  max-width: 100%;
+  display: block;
+}
+
+/* 编辑模式下显示网格 */
+.shortcutsFreeModeEdit {
+  background-image:
+    linear-gradient(rgba(128, 128, 128, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(128, 128, 128, 0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+  border: 1px dashed rgba(128, 128, 128, 0.25);
+  border-radius: 8px;
+}
+
+.shortcutsFreeMode .shortcutItemFree {
+  position: absolute;
 }
 
 .shortcutItem {

@@ -1,0 +1,207 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+}
+
+.trigger {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20px;
+  height: 100vh;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.content {
+  width: 0;
+  height: 100vh;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  border-right: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0 20px;
+  overflow: hidden;
+  transition: width 0.25s ease;
+  pointer-events: auto;
+}
+
+.expanded .content {
+  width: 180px;
+}
+
+.topActions {
+  padding: 0 8px 12px;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 8px;
+}
+
+.editToggleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1.5px solid var(--glass-border);
+  border-radius: 50%;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editToggleBtn:hover {
+  background: var(--glass-bg);
+  color: var(--text-secondary);
+  border-color: var(--text-secondary);
+}
+
+.editToggleActive {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 0 8px rgba(0, 122, 255, 0.4);
+}
+
+.editToggleActive:hover {
+  background: var(--accent-gradient);
+  color: white;
+  opacity: 0.9;
+}
+
+.pageList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 8px;
+  overflow-y: auto;
+}
+
+.pageItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  position: relative;
+}
+
+.pageItem:hover {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+}
+
+.pageItem.active {
+  background: var(--accent-gradient);
+  color: white;
+}
+
+.pageIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  flex-shrink: 0;
+}
+
+.pageItem.active .pageIcon {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.pageItem.dragging {
+  opacity: 0.5;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pageItem.dropTarget {
+  border-top: 2px solid var(--accent-primary);
+}
+
+.pageName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  cursor: grab;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.editInput {
+  flex: 1;
+  background: var(--glass-bg-heavy);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.actionBtn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 8px 0;
+  padding: 10px;
+  background: var(--glass-bg);
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addBtn:hover {
+  background: var(--glass-bg-heavy);
+  color: var(--text-primary);
+  border-style: solid;
+}
