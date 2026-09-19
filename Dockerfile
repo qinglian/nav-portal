@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginx:1.27-alpine
+FROM nginx:alpine
 
 # Remove the stock virtual host and serve this static site with SPA fallback.
 RUN rm /etc/nginx/conf.d/default.conf
